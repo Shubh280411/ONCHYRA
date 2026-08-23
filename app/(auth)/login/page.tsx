@@ -47,51 +47,76 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-5"
       style={{
+        fontFamily: "'Inter', sans-serif",
         background: '#03040a',
+        color: 'white',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
         backgroundImage: 'radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.08) 0%, transparent 60%)',
       }}
     >
-      <div className="w-full max-w-[420px] flex flex-col gap-4">
-        <div className="text-center">
-          <img src="/logo.png" alt="ONCHYRA" className="h-9 inline-block align-middle" />
+      <div style={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ textAlign: 'center' }}>
+          <img src="/logo.png" alt="ONCHYRA" style={{ height: 36, verticalAlign: 'middle' }} />
         </div>
         <div
-          className="text-center uppercase tracking-[3px] text-[10px]"
-          style={{ color: 'rgba(255,255,255,0.2)' }}
+          style={{
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.2)',
+            textAlign: 'center',
+            textTransform: 'uppercase',
+            letterSpacing: 3,
+            marginTop: 2,
+          }}
         >
           Welcome Back
         </div>
 
         <div
-          className="rounded-3xl p-8"
           style={{
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 24,
+            padding: '32px 28px',
             backdropFilter: 'blur(20px)',
           }}
         >
-          <div className="text-center text-[15px] font-extrabold mb-1">Login</div>
+          <div style={{ fontSize: 15, fontWeight: 800, textAlign: 'center', marginBottom: 4 }}>Login</div>
           <div
-            className="text-center text-[10px] uppercase tracking-[1px] mb-5"
-            style={{ color: 'rgba(255,255,255,0.25)' }}
+            style={{
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.25)',
+              textAlign: 'center',
+              marginBottom: 20,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}
           >
             Access your account
           </div>
 
-          <div className="relative mt-3.5">
+          <div style={{ position: 'relative', marginTop: 14 }}>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email Address"
               autoComplete="email"
-              className="w-full py-4 px-[18px] rounded-[14px] text-white text-[13px] outline-none transition-all duration-250"
               style={{
+                width: '100%',
+                padding: '16px 18px',
+                borderRadius: 14,
                 border: '1px solid rgba(255,255,255,0.08)',
                 background: 'rgba(255,255,255,0.04)',
-                fontFamily: 'Inter',
+                color: 'white',
+                fontSize: 13,
+                fontFamily: "'Inter', sans-serif",
+                outline: 'none',
+                transition: '0.25s',
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(167,139,250,0.35)';
@@ -104,18 +129,24 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="relative mt-3.5">
+          <div style={{ position: 'relative', marginTop: 14 }}>
             <input
               type={showPass ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               autoComplete="current-password"
-              className="w-full py-4 px-[18px] rounded-[14px] text-white text-[13px] outline-none transition-all duration-250 pr-12"
               style={{
+                width: '100%',
+                padding: '16px 18px',
+                borderRadius: 14,
                 border: '1px solid rgba(255,255,255,0.08)',
                 background: 'rgba(255,255,255,0.04)',
-                fontFamily: 'Inter',
+                color: 'white',
+                fontSize: 13,
+                fontFamily: "'Inter', sans-serif",
+                outline: 'none',
+                transition: '0.25s',
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(167,139,250,0.35)';
@@ -130,8 +161,21 @@ export default function LoginPage() {
               type="button"
               onClick={() => setShowPass(!showPass)}
               tabIndex={-1}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 flex p-1 transition-colors duration-200"
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}
+              style={{
+                position: 'absolute',
+                right: 14,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255,255,255,0.3)',
+                cursor: 'pointer',
+                padding: 4,
+                display: 'flex',
+                transition: '0.2s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 {showPass ? (
@@ -151,22 +195,49 @@ export default function LoginPage() {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full mt-4 py-4 rounded-[14px] text-black font-black text-[13px] transition-all duration-250"
             style={{
-              background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
+              width: '100%',
+              marginTop: 16,
+              padding: 16,
               border: 'none',
+              borderRadius: 14,
+              background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
+              color: '#000',
+              fontWeight: 900,
+              fontSize: 13,
               cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.5 : 1,
-              fontFamily: 'Inter',
+              fontFamily: "'Inter', sans-serif",
+              transition: '0.25s',
               letterSpacing: '0.3px',
+              opacity: loading ? 0.5 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.opacity = '0.9';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) {
+                e.currentTarget.style.opacity = '1';
+                e.currentTarget.style.transform = 'none';
+              }
             }}
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
 
           <div
-            className="block mt-[18px] text-center text-xs cursor-pointer transition-colors duration-200"
-            style={{ color: 'rgba(255,255,255,0.25)' }}
+            style={{
+              display: 'block',
+              marginTop: 18,
+              textAlign: 'center',
+              fontSize: 12,
+              color: 'rgba(255,255,255,0.25)',
+              textDecoration: 'none',
+              transition: '0.2s',
+              cursor: 'pointer',
+            }}
             onClick={handleResetPassword}
             onMouseEnter={(e) => { e.currentTarget.style.color = '#a78bfa'; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.25)'; }}
@@ -177,8 +248,17 @@ export default function LoginPage() {
 
         <Link
           href="/register"
-          className="block mt-1.5 text-center text-xs no-underline transition-colors duration-200"
-          style={{ color: 'rgba(255,255,255,0.25)' }}
+          style={{
+            display: 'block',
+            marginTop: 6,
+            textAlign: 'center',
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.25)',
+            textDecoration: 'none',
+            transition: '0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#a78bfa'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.25)'; }}
         >
           No account? <span style={{ color: '#a78bfa', fontWeight: 700 }}>Register</span>
         </Link>

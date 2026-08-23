@@ -114,98 +114,108 @@ export default function IncomePage() {
   if (loading) return <Loading text="Loading your income..." />;
 
   return (
-    <div className="min-h-screen px-4 py-5 max-w-md mx-auto flex flex-col gap-3.5">
-      {ToastComponent}
+    <div style={{ minHeight: '100vh', fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
+      <div style={{ width: '100%', maxWidth: 600, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {ToastComponent}
 
-      {/* Header */}
-      <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl px-4 py-3.5">
-        <Link href="/dashboard" className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.06] text-white shrink-0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-        </Link>
-        <span className="font-[family-name:var(--font-space-grotesk)] font-black text-lg bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent flex-1">
-          ONCHYRA
-        </span>
-        <div className="w-9" />
-      </div>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 22, padding: '14px 16px' }}>
+          <Link href="/dashboard" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, cursor: 'pointer', color: 'white', textDecoration: 'none', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
+          </Link>
+          <span style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flex: 1 }}>
+            ONCHYRA
+          </span>
+          <div style={{ width: 36 }} />
+        </div>
 
-      {/* Title */}
-      <h1 className="font-[family-name:var(--font-space-grotesk)] font-extrabold text-xl">Income</h1>
-      <p className="text-white/40 text-xs -mt-2">Your earnings overview</p>
+        {/* Title */}
+        <h1 style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 22, margin: '4px 0 2px' }}>Income</h1>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: -2 }}>Your earnings overview</p>
 
-      {/* Tabs */}
-      <div className="flex gap-1.5 bg-white/[0.02] rounded-xl p-1">
-        {([['referral', 'Referral'], ['leadership', 'Leadership'], ['matching', 'Matching']] as const).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`flex-1 py-2.5 rounded-lg text-[11px] font-bold transition-all ${
-              tab === key ? 'bg-purple-500/[0.12] text-[var(--primary)]' : 'text-white/30'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.02)', borderRadius: 14, padding: 4 }}>
+          {([['referral', 'Referral'], ['leadership', 'Leadership'], ['matching', 'Matching']] as const).map(([key, lbl]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              style={{
+                flex: 1, padding: 10, textAlign: 'center', borderRadius: 11, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: '0.2s',
+                color: tab === key ? '#a78bfa' : 'rgba(255,255,255,0.3)',
+                background: tab === key ? 'rgba(167,139,250,0.12)' : 'transparent',
+                border: 'none',
+              }}
+            >
+              {lbl}
+            </button>
+          ))}
+        </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl text-center p-3.5">
-          <div className="text-[7px] text-white/35 font-bold tracking-wider uppercase">Referral</div>
-          <div className="font-[family-name:var(--font-space-grotesk)] font-extrabold text-sm text-[var(--primary)] mt-1">
-            {refUsdt > 0 ? formatUSD(refUsdt) : ''}{refOnc > 0 ? `${refUsdt > 0 ? ' ' : ''}${refOnc.toFixed(2)} ONC` : refUsdt === 0 ? '$0' : ''}
+        {/* Summary Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, textAlign: 'center', padding: '14px 8px', backdropFilter: 'blur(20px)' }}>
+            <div style={{ fontSize: 7, opacity: 0.35, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Referral</div>
+            <div style={{ fontWeight: 800, fontSize: 14, color: '#a78bfa', fontFamily: "'Space Grotesk'", marginTop: 3 }}>
+              {refUsdt > 0 ? formatUSD(refUsdt) : ''}{refOnc > 0 ? `${refUsdt > 0 ? ' ' : ''}${refOnc.toFixed(2)} ONC` : refUsdt === 0 ? '$0' : ''}
+            </div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, textAlign: 'center', padding: '14px 8px', backdropFilter: 'blur(20px)' }}>
+            <div style={{ fontSize: 7, opacity: 0.35, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Leadership</div>
+            <div style={{ fontWeight: 800, fontSize: 14, color: '#fbbf24', fontFamily: "'Space Grotesk'", marginTop: 3 }}>{formatUSD(leadTotal)}</div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, textAlign: 'center', padding: '14px 8px', backdropFilter: 'blur(20px)' }}>
+            <div style={{ fontSize: 7, opacity: 0.35, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Matching</div>
+            <div style={{ fontWeight: 800, fontSize: 14, color: '#22c55e', fontFamily: "'Space Grotesk'", marginTop: 3 }}>{formatUSD(matchTotal)}</div>
           </div>
         </div>
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl text-center p-3.5">
-          <div className="text-[7px] text-white/35 font-bold tracking-wider uppercase">Leadership</div>
-          <div className="font-[family-name:var(--font-space-grotesk)] font-extrabold text-sm text-yellow-400 mt-1">{formatUSD(leadTotal)}</div>
-        </div>
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl text-center p-3.5">
-          <div className="text-[7px] text-white/35 font-bold tracking-wider uppercase">Matching</div>
-          <div className="font-[family-name:var(--font-space-grotesk)] font-extrabold text-sm text-green-400 mt-1">{formatUSD(matchTotal)}</div>
-        </div>
-      </div>
 
-      {/* Time Filters */}
-      <div className="flex gap-1.5 justify-end">
-        {(['24h', '7d', '30d', 'all'] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold tracking-wider transition-all ${
-              filter === f ? 'text-[var(--primary)] bg-purple-500/10 border border-purple-500/20' : 'text-white/30 bg-white/[0.03] border border-transparent'
-            }`}
-          >
-            {f === 'all' ? 'ALL' : f.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
-      {/* Total */}
-      <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl text-center py-6">
-        <div className="font-[family-name:var(--font-space-grotesk)] font-black text-4xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent">
-          {total.toFixed(2)}
+        {/* Time Filters */}
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+          {(['24h', '7d', '30d', 'all'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              style={{
+                padding: '5px 12px', borderRadius: 10, fontSize: 9, fontWeight: 800, cursor: 'pointer', letterSpacing: 0.5, border: '1px solid transparent',
+                color: filter === f ? '#a78bfa' : 'rgba(255,255,255,0.3)',
+                background: filter === f ? 'rgba(167,139,250,0.1)' : 'rgba(255,255,255,0.03)',
+                borderColor: filter === f ? 'rgba(167,139,250,0.2)' : 'transparent',
+              }}
+            >
+              {f === 'all' ? 'ALL' : f.toUpperCase()}
+            </button>
+          ))}
         </div>
-        <div className="text-[10px] text-white/25 uppercase tracking-widest mt-1">{label}</div>
-      </div>
 
-      {/* Income List */}
-      <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden">
-        {items.length === 0 ? (
-          <div className="py-10 text-center text-xs text-white/15">No income yet</div>
-        ) : (
-          items.map((item, i) => (
-            <div key={i} className="flex justify-between items-center px-4 py-3.5 border-b border-white/[0.03] last:border-b-0 text-xs">
-              <div className="flex items-center gap-2.5">
-                <div className="text-[13px] font-bold">+{item.type === 'registration_bonus' ? '' : '$'}{(item.amt || 0).toFixed(2)}{item.type === 'registration_bonus' ? ' ONC' : ''}</div>
-                <div className="text-[10px] text-white/30">{item.src} &middot; {item.detail}</div>
+        {/* Total */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, textAlign: 'center', padding: 24, backdropFilter: 'blur(20px)' }}>
+          <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 36, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            {total.toFixed(2)}
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 2 }}>{label}</div>
+        </div>
+
+        {/* Income List */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, padding: 0, backdropFilter: 'blur(20px)' }}>
+          {items.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>No income yet</div>
+          ) : (
+            items.map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>+{item.type === 'registration_bonus' ? '' : '$'}{(item.amt || 0).toFixed(2)}{item.type === 'registration_bonus' ? ' ONC' : ''}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{item.src} · {item.detail}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>{item.date ? formatTimeAgo(item.date) : ''}</div>
+                  <div style={{ fontSize: 9, color: '#22c55e' }}>Completed</div>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="text-[9px] text-white/20">{item.date ? formatTimeAgo(item.date) : ''}</div>
-                <div className="text-[9px] text-green-400">Completed</div>
-              </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
