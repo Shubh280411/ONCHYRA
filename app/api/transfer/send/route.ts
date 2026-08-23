@@ -1,0 +1,62 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { get, increment, findWhere, query } from '@/lib/db';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { fromUid, referralCode, amount } = await request.json();
+    if (!fromUid || !referralCode || !amount) {
+      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+    }
+    if (amount < 1) {
+      return NextResponse.json({ error: 'Minimum transfer is 1 ONC' }, { status: 400 });
+    }
+
+    const sender = await get('users', fromUid);
+    if (!sender) {
+      return NextResponse.json({ error: 'Sender not found' }, { status: 404 });
+    }
+
+    if ((sender.balance || 0) < amount) {
+      return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
+    }
+
+    const receivers = await findWhere('users', { referral_code: (referralCode as string).toUpperCase() });
+    if (!receivers.length) {
+      return NextResponse.json({ error: 'Receiver not found' }, { status: 404 });
+    }
+    const receiver = receivers[0];
+
+    if (receiver.uid === fromUid) {
+      return NextResponse.json({ error: 'Cannot send to yourself' }, { status: 400 });
+    }
+
+    const burn = Math.round((amount as number) * 0.1 * 100) / 100;
+    const net = Math.round(((amount as number) - burn) * 100) / 100;
+
+    await increment('users', fromUid, 'balance', -amount);
+    await increment('users', receiver.uid as string, 'balance', net);
+
+    await query(
+      `INSERT INTO p2p_transfers (id, from_uid, to_uid, from_code, to_code, from_name, to_name, gross_amount, burn, net_amount, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'completed', $11)`,
+      [
+        'trf_' + fromUid + '_' + Date.now(),
+        fromUid,
+        receiver.uid,
+        sender.referral_code || '?',
+        (referralCode as string).toUpperCase(),
+        sender.name || '?',
+        receiver.name || '?',
+        amount,
+        burn,
+        net,
+        Date.now(),
+      ]
+    );
+
+    return NextResponse.json({ success: true, amount, burn, received: net });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
