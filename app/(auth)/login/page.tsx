@@ -210,6 +210,7 @@ export default function LoginPage() {
               transition: '0.25s',
               letterSpacing: '0.3px',
               opacity: loading ? 0.5 : 1,
+              transform: 'none',
             }}
             onMouseEnter={(e) => {
               if (!loading) {

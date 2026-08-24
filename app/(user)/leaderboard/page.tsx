@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
 import { detectApiUrl, formatUSD } from '@/lib/utils';
-import Loading from '@/components/ui/Loading';
 
 interface LeaderEntry {
   uid: string;
@@ -66,7 +65,17 @@ export default function LeaderboardPage() {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  if (loading) return <Loading text="Loading leaderboard..." />;
+  if (loading) {
+    return (
+      <div style={{ fontFamily: "'Inter',sans-serif", background: '#05060f', color: 'white', padding: 15, overflowX: 'hidden', minHeight: '100vh' }}>
+        <div style={{ position: 'fixed', top: '-10%', left: '-10%', width: '120%', height: '120%', background: 'radial-gradient(circle at 20% 30%, #6d28d933, transparent 40%),radial-gradient(circle at 80% 70%, #2563eb33, transparent 40%)', zIndex: -1 }} />
+        <div style={{ maxWidth: 600, margin: '0 auto', paddingTop: 40, textAlign: 'center' }}>
+          <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.05)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>Loading leaderboard...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", background: '#05060f', color: 'white', padding: 15, overflowX: 'hidden', minHeight: '100vh', position: 'relative' }}>
@@ -84,7 +93,7 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Rank Card */}
-        <div style={{ background: 'linear-gradient(135deg, #1e1b4b, #0f172a)', border: '1px solid rgba(167, 139, 250, 0.3)', borderRadius: 24, padding: 25, textAlign: 'center', marginBottom: 25, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: 'linear-gradient(135deg, #1e1b4b, #0f172a)', border: '1px solid rgba(167, 139, 250, 0.3)', borderRadius: 24, padding: 25, textAlign: 'center', marginBottom: 25, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', position: 'relative', overflow: 'hidden', transition: 'opacity 0.3s' }}>
           <div style={{ position: 'absolute', top: '-50%', left: '-50%', width: '200%', height: '200%', background: 'radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 60%)' }} />
           <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 2, opacity: 0.6, marginBottom: 8, position: 'relative', zIndex: 1 }}>Global Standing</div>
           <div style={{ fontFamily: "'Space Grotesk'", fontSize: 48, fontWeight: 800, color: 'white', lineHeight: 1, marginBottom: 10, position: 'relative', zIndex: 1 }}>
@@ -100,7 +109,7 @@ export default function LeaderboardPage() {
           {/* List Header */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 15px 15px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: 15 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-              <h3 style={{ fontFamily: "'Space Grotesk'", fontSize: 18, fontWeight: 700 }}>Top Validators</h3>
+              <h3 style={{ fontFamily: "'Space Grotesk'", fontSize: 18, fontWeight: 700, margin: 0 }}>Top Validators</h3>
               <span style={{ fontSize: 12, opacity: 0.5 }}>{totalUsers.toLocaleString()} Validators</span>
             </div>
           </div>
@@ -129,6 +138,12 @@ export default function LeaderboardPage() {
                 const isMe = uid && u.uid === uid;
                 const team = (u.refLevel1 || 0) + (u.refLevel2 || 0) + (u.refLevel3 || 0);
 
+                let rankDisplay: React.ReactNode;
+                if (u._rank === 1) rankDisplay = <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{MEDAL_SVG.gold}</div>;
+                else if (u._rank === 2) rankDisplay = <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{MEDAL_SVG.silver}</div>;
+                else if (u._rank === 3) rankDisplay = <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{MEDAL_SVG.bronze}</div>;
+                else rankDisplay = <div style={{ width: 40, fontWeight: 800, fontFamily: "'Space Grotesk'", fontSize: 16, color: 'rgba(255,255,255,0.3)', textAlign: 'center', flexShrink: 0 }}>{u._rank < 10 ? `0${u._rank}` : u._rank}</div>;
+
                 return (
                   <div
                     key={u.uid}
@@ -141,15 +156,7 @@ export default function LeaderboardPage() {
                       transition: 'background 0.2s',
                     }}
                   >
-                    {u._rank <= 3 ? (
-                      <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {u._rank === 1 ? MEDAL_SVG.gold : u._rank === 2 ? MEDAL_SVG.silver : MEDAL_SVG.bronze}
-                      </div>
-                    ) : (
-                      <div style={{ width: 40, fontWeight: 800, fontFamily: "'Space Grotesk'", fontSize: 16, color: 'rgba(255,255,255,0.3)', textAlign: 'center', flexShrink: 0 }}>
-                        {u._rank < 10 ? `0${u._rank}` : u._rank}
-                      </div>
-                    )}
+                    {rankDisplay}
                     <div style={{ flex: 1, marginLeft: 10, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name || 'Anonymous Miner'}</div>
                       <div style={{ fontSize: 10, fontWeight: 600, color: '#a78bfa', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4 }}>

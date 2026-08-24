@@ -8,11 +8,6 @@ import { detectApiUrl, formatUSD } from '@/lib/utils';
 import type { Deposit } from '@/types';
 import Loading from '@/components/ui/Loading';
 
-const NETWORKS = [
-  { id: 'BEP20', name: 'USDT (BEP20)', desc: 'Binance Smart Chain', iconColor: 'bg-yellow-500/[0.12]' },
-  { id: 'Polygon', name: 'POL (Polygon)', desc: 'Polygon Network', iconColor: 'bg-purple-500/[0.12]' },
-];
-
 export default function DepositPage() {
   const { uid } = useAuth();
   const { showToast, ToastComponent } = useToast();
@@ -28,6 +23,8 @@ export default function DepositPage() {
   const [generating, setGenerating] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState<Deposit | null>(null);
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     if (!uid) return;
@@ -49,7 +46,7 @@ export default function DepositPage() {
         const deps = await depRes.json();
         setHistory((deps || []).filter((d: Deposit) => (Number(d.amount) || 0) > 0));
       }
-    } catch { /* silent */ }
+    } catch {}
     setLoading(false);
   }
 
@@ -89,157 +86,182 @@ export default function DepositPage() {
 
   if (loading) return <Loading text="Loading deposit info..." />;
 
+  const isBsc = modalNetwork === 'BEP20';
+
   return (
-    <div className="min-h-screen px-4 py-5 max-w-md mx-auto flex flex-col gap-3.5">
+    <div style={{ fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px' }}>
       {ToastComponent}
 
-      {/* Header */}
-      <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl px-4 py-3.5">
-        <Link href="/dashboard" className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.06] text-white shrink-0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-        </Link>
-        <span className="font-[family-name:var(--font-space-grotesk)] font-black text-lg bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent flex-1">
-          ONCHYRA
-        </span>
-        <span className="text-[11px] font-bold bg-purple-500/10 border border-purple-500/15 px-3.5 py-1.5 rounded-full whitespace-nowrap">
-          Wallet <span className="font-[family-name:var(--font-space-grotesk)] text-[var(--primary)]">{formatUSD(balance)}</span>
-        </span>
-      </div>
+      <style>{`
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+        @keyframes slideUp { from{transform:translateY(40px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+        @keyframes pulseRing { 0%{transform:scale(1);opacity:0.4;} 50%{transform:scale(1.15);opacity:0.1;} 100%{transform:scale(1);opacity:0.4;} }
+      `}</style>
 
-      {/* Balance Hero */}
-      <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/5 border border-purple-500/12 rounded-3xl p-6 text-center relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-[120px] h-[120px] rounded-full bg-purple-500/[0.08] blur-2xl pointer-events-none" />
-        <div className="text-[10px] font-bold uppercase tracking-[2px] text-white/25">Available Balance</div>
-        <div className="font-[family-name:var(--font-space-grotesk)] font-black text-[42px] bg-gradient-to-r from-white via-purple-400/60 to-transparent bg-clip-text text-transparent leading-tight">
-          {formatUSD(balance)}
+      {/* phone-frame */}
+      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16, position: 'relative' }}>
+
+        {/* header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 22, padding: '14px 16px' }}>
+          <Link href="/dashboard" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, cursor: 'pointer', color: 'white', textDecoration: 'none', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          </Link>
+          <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flex: 1 }}>ONCHYRA</div>
         </div>
-        <div className="text-[11px] text-white/20 mt-1.5">Deposit to start mining</div>
-      </div>
 
-      {/* Title */}
-      <h1 className="font-[family-name:var(--font-space-grotesk)] font-extrabold text-xl flex items-center gap-2">
-        <svg width="22" height="22" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24" style={{ verticalAlign: '-4px' }}><path d="M21 12a9 9 0 1 1-6.219-8.56" /><polyline points="16 3 21 3 21 8" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-        Deposit Funds
-      </h1>
-      <p className="text-white/40 text-xs -mt-2">Choose a network to deposit</p>
-
-      {/* Network Cards */}
-      {NETWORKS.map(net => (
-        <button
-          key={net.id}
-          onClick={() => openDeposit(net.id)}
-          className="flex items-center gap-4 bg-white/[0.03] border border-white/[0.06] rounded-3xl p-5 text-left transition-all active:scale-[0.97] w-full"
-        >
-          <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center shrink-0 ${net.iconColor}`}>
-            <img
-              src={net.id === 'BEP20' ? 'https://cryptologos.cc/logos/tether-usdt-logo.svg' : 'https://cryptologos.cc/logos/polygon-matic-logo.svg'}
-              alt={net.name}
-              className="w-7 h-7"
-            />
-          </div>
-          <div className="flex-1">
-            <div className="font-bold text-[15px]">{net.name}</div>
-            <div className="text-[11px] text-white/40 mt-0.5">{net.desc}</div>
-          </div>
-          <svg className="text-white/20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-        </button>
-      ))}
-
-      {/* Recent Deposits */}
-      <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-white/30 mb-3 flex items-center gap-2">
-          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-          Recent Deposits
+        {/* bal-hero */}
+        <div style={{ background: 'linear-gradient(135deg,rgba(167,139,250,0.1),rgba(96,165,250,0.05))', border: '1px solid rgba(167,139,250,0.12)', borderRadius: 24, padding: '24px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'rgba(167,139,250,0.08)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 2, color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>Available Balance</div>
+          <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 900, fontSize: 42, background: 'linear-gradient(135deg,#fff 20%,rgba(167,139,250,0.6))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.1 }}>{formatUSD(balance)}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 6 }}>Deposit to start mining</div>
         </div>
-        {history.length === 0 ? (
-          <div className="py-5 text-center text-[11px] text-white/20">No deposits yet</div>
-        ) : (
-          history.map(dep => {
-            const isPol = dep.network === 'Polygon';
-            const rawAmt = isPol ? (Number(dep.polAmount) || 0) : (Number(dep.amount) || 0);
-            const symbol = isPol ? 'POL' : 'USDT';
-            return (
-              <div
-                key={dep.id}
-                onClick={() => showDetail(dep)}
-                className="flex justify-between items-center p-3 bg-white/[0.02] rounded-xl mb-1.5 last:mb-0 text-[11px] cursor-pointer hover:bg-white/[0.04] transition-colors"
-              >
-                <span className="flex items-center gap-1.5">
-                  <img src={isPol ? 'https://cryptologos.cc/logos/polygon-matic-logo.svg' : 'https://cryptologos.cc/logos/tether-usdt-logo.svg'} alt={symbol} className="w-3.5 h-3.5" />
-                  {isPol ? `${rawAmt} POL` : `${formatUSD(Number(dep.amount) || 0)} USDT`}
-                  <span className="opacity-30 ml-1">{fmtDate(dep.createdAt)}</span>
-                </span>
-                <span style={{ color: dep.status === 'completed' ? '#22c55e' : '#fbbf24' }} className="font-bold">{dep.status}</span>
-              </div>
-            );
-          })
-        )}
-      </div>
 
-      {/* Deposit Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-[8px] z-[1000] flex items-end justify-center p-5" onClick={() => setModalOpen(false)}>
-          <div className="bg-[var(--bg)] border border-white/[0.1] rounded-[32px] p-7 max-w-[440px] w-full max-h-[90vh] overflow-y-auto text-center" onClick={e => e.stopPropagation()}>
+        {/* section title */}
+        <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 22, margin: '4px 0 2px' }}>
+          <svg width="22" height="22" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24" style={{ verticalAlign: '-4px', marginRight: 6 }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/><polyline points="16 3 21 3 21 8"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Deposit Funds
+        </div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>Choose a network to deposit</div>
+
+        {/* BEP20 Card */}
+        <div onClick={() => openDeposit('BEP20')} style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, padding: 20, cursor: 'pointer', transition: '0.25s' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(255,255,255,0.04)' }}>
+            <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" alt="BNB" style={{ width: 28, height: 28 }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 15 }}>USDT (BEP20)</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Binance Smart Chain</div>
+          </div>
+          <svg style={{ color: 'rgba(255,255,255,0.2)' }} width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        {/* Polygon Card */}
+        <div onClick={() => openDeposit('Polygon')} style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, padding: 20, cursor: 'pointer', transition: '0.25s' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(255,255,255,0.04)' }}>
+            <img src="https://cryptologos.cc/logos/polygon-matic-logo.svg" alt="POL" style={{ width: 28, height: 28 }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 15 }}>POL (Polygon)</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Polygon Network</div>
+          </div>
+          <svg style={{ color: 'rgba(255,255,255,0.2)' }} width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        {/* Deposit Modal */}
+        <div onClick={() => setModalOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', zIndex: 1000, display: modalOpen ? 'flex' : 'none', alignItems: 'flex-end', justifyContent: 'center', padding: 20, animation: 'fadeIn 0.25s' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#03040a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 32, padding: '28px 24px', maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto', animation: 'slideUp 0.35s', textAlign: 'center' }}>
             {generating ? (
-              <div className="py-5 text-xs text-white/20">Generating address...</div>
+              <div style={{ padding: 20, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>Generating address...</div>
             ) : depositAddress ? (
-              <div className="flex flex-col items-center">
-                <div className="bg-white rounded-2xl p-3 inline-block mb-3">
-                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(depositAddress)}`} alt="QR" className="w-[200px] h-[200px] block" />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ background: 'white', borderRadius: 16, padding: 12, display: 'inline-block', marginBottom: 12 }}>
+                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(depositAddress)}`} alt="QR" style={{ width: 200, height: 200, display: 'block' }} />
                 </div>
-                <div className={`inline-flex items-center gap-1.5 text-[11px] px-4 py-1.5 rounded-full mb-3 ${modalNetwork === 'BEP20' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-purple-500/10 text-purple-400'}`}>
-                  <img src={modalNetwork === 'BEP20' ? 'https://cryptologos.cc/logos/bnb-bnb-logo.svg' : 'https://cryptologos.cc/logos/polygon-matic-logo.svg'} alt="" className="w-3.5 h-3.5" />
-                  {modalNetwork === 'BEP20' ? 'USDT (BEP20)' : 'POL (Polygon)'}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 16px', borderRadius: 100, marginBottom: 12, background: isBsc ? 'rgba(240,185,11,0.1)' : 'rgba(130,71,229,0.1)', color: isBsc ? '#f0b90b' : '#8247e5', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 1 }}>
+                  <img src={isBsc ? 'https://cryptologos.cc/logos/bnb-bnb-logo.svg' : 'https://cryptologos.cc/logos/polygon-matic-logo.svg'} alt="" style={{ width: 14, height: 14 }} />
+                  {isBsc ? 'USDT (BEP20)' : 'POL (Polygon)'}
                 </div>
-                <div className="text-[11px] font-mono font-semibold text-white/60 word-break bg-white/[0.02] border border-white/[0.1] rounded-[14px] p-3.5 mb-3 w-full">{depositAddress}</div>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(depositAddress); showToast('Address copied!'); }}
-                  className={`px-6 py-2.5 rounded-xl font-extrabold text-xs cursor-pointer ${modalNetwork === 'BEP20' ? 'bg-yellow-400 text-black' : 'bg-purple-600 text-white'}`}
-                >
-                  Copy Address
-                </button>
-                <div className="text-[10px] text-white/20 mt-2">#{depositIndex} — {modalNetwork}</div>
-                <div className="text-[10px] text-red-400/60 px-2.5 py-2.5 bg-red-500/[0.04] border border-red-500/[0.08] rounded-[10px] mt-2.5 leading-relaxed">
-                  Send only {modalNetwork === 'BEP20' ? 'USDT (BEP20)' : 'POL (Polygon)'}
-                </div>
-                <div className="text-[11px] text-white/30 mt-3">Waiting for deposit... (typically 1-5 min)</div>
+                <div style={{ fontSize: 11, fontFamily: 'monospace', fontWeight: 600, color: 'rgba(255,255,255,0.6)', wordBreak: 'break-all' as const, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 14, margin: '12px 0' }}>{depositAddress}</div>
+                <button onClick={() => { navigator.clipboard.writeText(depositAddress); showToast('Address copied!'); }} style={{ padding: '10px 24px', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 12, cursor: 'pointer', background: isBsc ? '#f0b90b' : '#8247e5', color: isBsc ? '#000' : '#fff', display: 'block', margin: '0 auto' }}>Copy Address</button>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 8 }}>#{depositIndex} — {modalNetwork}</div>
+                <div style={{ fontSize: 10, color: 'rgba(239,68,68,0.6)', padding: 10, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.08)', borderRadius: 10, marginTop: 10, lineHeight: 1.5 }}>Send only {isBsc ? 'USDT (BEP20)' : 'POL (Polygon)'}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 12 }}>Waiting for deposit... (typically 1-5 min)</div>
               </div>
             ) : null}
-            <button onClick={() => setModalOpen(false)} className="mt-4 w-full py-2.5 border-none bg-white/[0.04] rounded-[10px] text-white/30 font-bold text-[11px] cursor-pointer">Close</button>
+            <button onClick={() => setModalOpen(false)} style={{ marginTop: 16, padding: 10, border: 'none', background: 'rgba(255,255,255,0.04)', borderRadius: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700, fontSize: 11, cursor: 'pointer', width: '100%' }}>Close</button>
           </div>
         </div>
-      )}
 
-      {/* Detail Modal */}
-      {detailOpen && selectedDeposit && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-[8px] z-[1000] flex items-end justify-center p-5" onClick={() => setDetailOpen(false)}>
-          <div className="bg-[var(--bg)] border border-white/[0.1] rounded-[32px] p-7 max-w-[440px] w-full max-h-[90vh] overflow-y-auto text-left" onClick={e => e.stopPropagation()}>
-            <div className="font-[family-name:var(--font-space-grotesk)] font-black text-base mb-4">Deposit Details</div>
-            <div className="flex items-center gap-3 mb-4 p-3 bg-white/[0.02] rounded-xl">
-              <img src={selectedDeposit.network === 'Polygon' ? 'https://cryptologos.cc/logos/polygon-matic-logo.svg' : 'https://cryptologos.cc/logos/tether-usdt-logo.svg'} alt="" className="w-8 h-8" />
-              <div>
-                <div className="font-bold text-[15px]">
-                  {selectedDeposit.network === 'Polygon' ? `${Number(selectedDeposit.polAmount) || 0} POL` : `${formatUSD(Number(selectedDeposit.amount) || 0)} USDT`}
-                </div>
-                <div className="text-[11px] text-white/30">{selectedDeposit.network === 'Polygon' ? 'Polygon' : 'BEP20'}</div>
-              </div>
-              <div className="ml-auto text-right">
-                <div className="font-bold text-[15px] text-green-400">{formatUSD(Number(selectedDeposit.amount) || 0)}</div>
-                <div className="text-[10px] text-white/20">USD Value</div>
+        {/* Success Modal */}
+        <div onClick={() => setSuccessOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', zIndex: 1000, display: successOpen ? 'flex' : 'none', alignItems: 'flex-end', justifyContent: 'center', padding: 20, animation: 'fadeIn 0.25s' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#03040a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 32, padding: '28px 24px', maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto', animation: 'slideUp 0.35s', textAlign: 'center' }}>
+            <div style={{ position: 'relative', width: 80, height: 80, margin: '0 auto 16px' }}>
+              <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', animation: 'pulseRing 1.5s infinite' }} />
+              <div style={{ position: 'absolute', inset: 4, borderRadius: '50%', background: 'rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="36" height="36" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
             </div>
-            <div className="text-[11px] leading-loose text-white/50">
-              <div className="flex justify-between py-1"><span className="text-white/30">Date</span><span>{fmtDate(selectedDeposit.createdAt)}</span></div>
-              <div className="flex justify-between py-1"><span className="text-white/30">Amount</span><span>{selectedDeposit.network === 'Polygon' ? `${Number(selectedDeposit.polAmount) || 0} POL` : `${formatUSD(Number(selectedDeposit.amount) || 0)} USDT`}</span></div>
-              {selectedDeposit.network === 'Polygon' && <div className="flex justify-between py-1"><span className="text-white/30">POL Price</span><span>${(Number(selectedDeposit.polPrice) || 0).toFixed(4)}</span></div>}
-              <div className="flex justify-between py-1"><span className="text-white/30">USD Value</span><span className="text-green-400 font-bold">{formatUSD(Number(selectedDeposit.amount) || 0)}</span></div>
-              <div className="flex justify-between py-1"><span className="text-white/30 whitespace-nowrap mr-2">TX Hash</span><span className="text-white/60 font-mono text-[10px] text-right break-all">{selectedDeposit.txHash || '-'}</span></div>
-              <div className="flex justify-between py-1"><span className="text-white/30">Status</span><span style={{ color: selectedDeposit.status === 'completed' ? '#22c55e' : '#fbbf24' }} className="font-bold">{selectedDeposit.status}</span></div>
-            </div>
-            <button onClick={() => setDetailOpen(false)} className="mt-4 w-full py-2.5 border-none bg-white/[0.04] rounded-[10px] text-white/30 font-bold text-[11px] cursor-pointer">Close</button>
+            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4, fontFamily: "'Space Grotesk',sans-serif" }}>Deposit Successful</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>{successMsg}</div>
+            <button onClick={() => setSuccessOpen(false)} style={{ marginTop: 0, padding: 10, border: 'none', background: 'rgba(255,255,255,0.04)', borderRadius: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700, fontSize: 11, cursor: 'pointer', width: '100%' }}>Done</button>
           </div>
         </div>
-      )}
+
+        {/* Detail Modal */}
+        <div onClick={() => setDetailOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', zIndex: 1000, display: detailOpen ? 'flex' : 'none', alignItems: 'flex-end', justifyContent: 'center', padding: 20, animation: 'fadeIn 0.25s' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#03040a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 32, padding: '28px 24px', maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto', animation: 'slideUp 0.35s', textAlign: 'left' }}>
+            <div style={{ fontSize: 16, fontWeight: 900, fontFamily: "'Space Grotesk',sans-serif", marginBottom: 16 }}>Deposit Details</div>
+            {selectedDeposit && (() => {
+              const isPol = selectedDeposit.network === 'Polygon';
+              const symbol = isPol ? 'POL' : 'USDT';
+              const logo = isPol ? 'https://cryptologos.cc/logos/polygon-matic-logo.svg' : 'https://cryptologos.cc/logos/tether-usdt-logo.svg';
+              const rawAmt = isPol ? (Number(selectedDeposit.polAmount) || 0) : (Number(selectedDeposit.amount) || 0);
+              const usdAmt = Number(selectedDeposit.amount) || 0;
+              const polPrice = Number(selectedDeposit.polPrice) || 0;
+              const txHash = selectedDeposit.txHash || '-';
+              const date = fmtDate(selectedDeposit.createdAt);
+              const networkName = isPol ? <span style={{ color: '#8247e5' }}>Polygon</span> : <span style={{ color: '#f0b90b' }}>BEP20</span>;
+              return (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 12 }}>
+                    <img src={logo} alt="" style={{ width: 32, height: 32 }} />
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 15 }}>{rawAmt} {symbol}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{networkName}</div>
+                    </div>
+                    <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: '#22c55e' }}>${usdAmt.toFixed(2)}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>USD Value</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, lineHeight: 2, color: 'rgba(255,255,255,0.5)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}><span style={{ color: 'rgba(255,255,255,0.3)' }}>Date</span><span style={{ color: 'white' }}>{date}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}><span style={{ color: 'rgba(255,255,255,0.3)' }}>Amount</span><span style={{ color: 'white' }}>{rawAmt} {symbol}</span></div>
+                    {isPol && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}><span style={{ color: 'rgba(255,255,255,0.3)' }}>POL Price</span><span style={{ color: 'white' }}>${polPrice.toFixed(4)}</span></div>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}><span style={{ color: 'rgba(255,255,255,0.3)' }}>USD Value</span><span style={{ color: '#22c55e', fontWeight: 700 }}>${usdAmt.toFixed(2)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', wordBreak: 'break-all' as const }}><span style={{ color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap' as const, marginRight: 8 }}>TX Hash</span><span style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace', fontSize: 10, textAlign: 'right' }}>{txHash}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}><span style={{ color: 'rgba(255,255,255,0.3)' }}>Status</span><span style={{ color: selectedDeposit.status === 'completed' ? '#22c55e' : '#fbbf24', fontWeight: 700 }}>{selectedDeposit.status || 'pending'}</span></div>
+                  </div>
+                </>
+              );
+            })()}
+            <button onClick={() => setDetailOpen(false)} style={{ marginTop: 16, padding: 10, border: 'none', background: 'rgba(255,255,255,0.04)', borderRadius: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700, fontSize: 11, cursor: 'pointer', width: '100%' }}>Close</button>
+          </div>
+        </div>
+
+        {/* Recent Deposits */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 22, padding: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 1, color: 'rgba(255,255,255,0.3)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Recent Deposits
+          </div>
+          {history.length === 0 ? (
+            <div style={{ padding: 12, textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>No deposits yet</div>
+          ) : (
+            history.map(dep => {
+              const isPol = dep.network === 'Polygon';
+              const rawAmt = isPol ? (Number(dep.polAmount) || 0) : (Number(dep.amount) || 0);
+              const symbol = isPol ? 'POL' : 'USDT';
+              const logo = isPol ? 'https://cryptologos.cc/logos/polygon-matic-logo.svg' : 'https://cryptologos.cc/logos/tether-usdt-logo.svg';
+              const label = isPol
+                ? <>{rawAmt} POL <span style={{ opacity: 0.4 }}>→ ${(Number(dep.amount) || 0).toFixed(2)}</span></>
+                : <>{formatUSD(Number(dep.amount) || 0)} USDT</>;
+              return (
+                <div key={dep.id} onClick={() => showDetail(dep)} style={{ display: 'flex', justifyContent: 'space-between', padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 12, marginBottom: 6, fontSize: 11, alignItems: 'center', cursor: 'pointer' }}>
+                  <span>
+                    <img src={logo} alt={symbol} style={{ width: 14, height: 14, verticalAlign: '-2px', marginRight: 6 }} />
+                    {label}
+                    <span style={{ opacity: 0.3 }}>{fmtDate(dep.createdAt)}</span>
+                  </span>
+                  <span style={{ color: dep.status === 'completed' ? '#22c55e' : '#fbbf24', fontWeight: 700 }}>{dep.status || 'pending'}</span>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+      </div>
     </div>
   );
 }

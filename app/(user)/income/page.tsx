@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
 import { detectApiUrl, formatTimeAgo, formatUSD } from '@/lib/utils';
-import Loading from '@/components/ui/Loading';
 
 interface IncomeItem {
   amt: number;
@@ -111,10 +110,19 @@ export default function IncomePage() {
     setLoading(false);
   }
 
-  if (loading) return <Loading text="Loading your income..." />;
+  if (loading) {
+    return (
+      <div style={{ fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
+        <div style={{ width: '100%', maxWidth: 600, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center', paddingTop: 60 }}>
+          <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.05)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>Loading your income...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ minHeight: '100vh', fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
+    <div style={{ fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
       <div style={{ width: '100%', maxWidth: 600, display: 'flex', flexDirection: 'column', gap: 14 }}>
         {ToastComponent}
 
@@ -130,40 +138,62 @@ export default function IncomePage() {
         </div>
 
         {/* Title */}
-        <h1 style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 22, margin: '4px 0 2px' }}>Income</h1>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: -2 }}>Your earnings overview</p>
+        <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 22, margin: '4px 0 2px' }}>Income</div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: -2 }}>Your earnings overview</div>
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.02)', borderRadius: 14, padding: 4 }}>
-          {([['referral', 'Referral'], ['leadership', 'Leadership'], ['matching', 'Matching']] as const).map(([key, lbl]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              style={{
-                flex: 1, padding: 10, textAlign: 'center', borderRadius: 11, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: '0.2s',
-                color: tab === key ? '#a78bfa' : 'rgba(255,255,255,0.3)',
-                background: tab === key ? 'rgba(167,139,250,0.12)' : 'transparent',
-                border: 'none',
-              }}
-            >
-              {lbl}
-            </button>
-          ))}
+          <button
+            onClick={() => setTab('referral')}
+            style={{
+              flex: 1, padding: 10, textAlign: 'center', borderRadius: 11, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: '0.2s', border: 'none',
+              color: tab === 'referral' ? '#a78bfa' : 'rgba(255,255,255,0.3)',
+              background: tab === 'referral' ? 'rgba(167,139,250,0.12)' : 'transparent',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: 5 }}><path d="M12 20v-6" /><path d="M6 20v-4" /><path d="M18 20v-8" /><path d="M2 20h20" /><path d="M2 14l4-4 4 4 6-6 4 4" /></svg>
+            Referral
+          </button>
+          <button
+            onClick={() => setTab('leadership')}
+            style={{
+              flex: 1, padding: 10, textAlign: 'center', borderRadius: 11, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: '0.2s', border: 'none',
+              color: tab === 'leadership' ? '#a78bfa' : 'rgba(255,255,255,0.3)',
+              background: tab === 'leadership' ? 'rgba(167,139,250,0.12)' : 'transparent',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: 5 }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+            Leadership
+          </button>
+          <button
+            onClick={() => setTab('matching')}
+            style={{
+              flex: 1, padding: 10, textAlign: 'center', borderRadius: 11, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: '0.2s', border: 'none',
+              color: tab === 'matching' ? '#a78bfa' : 'rgba(255,255,255,0.3)',
+              background: tab === 'matching' ? 'rgba(167,139,250,0.12)' : 'transparent',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: 5 }}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+            Matching
+          </button>
         </div>
 
         {/* Summary Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, textAlign: 'center', padding: '14px 8px', backdropFilter: 'blur(20px)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 4 }}><path d="M12 20v-6" /><path d="M6 20v-4" /><path d="M18 20v-8" /><path d="M2 20h20" /><path d="M2 14l4-4 4 4 6-6 4 4" /></svg>
             <div style={{ fontSize: 7, opacity: 0.35, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Referral</div>
             <div style={{ fontWeight: 800, fontSize: 14, color: '#a78bfa', fontFamily: "'Space Grotesk'", marginTop: 3 }}>
               {refUsdt > 0 ? formatUSD(refUsdt) : ''}{refOnc > 0 ? `${refUsdt > 0 ? ' ' : ''}${refOnc.toFixed(2)} ONC` : refUsdt === 0 ? '$0' : ''}
             </div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, textAlign: 'center', padding: '14px 8px', backdropFilter: 'blur(20px)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 4 }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
             <div style={{ fontSize: 7, opacity: 0.35, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Leadership</div>
             <div style={{ fontWeight: 800, fontSize: 14, color: '#fbbf24', fontFamily: "'Space Grotesk'", marginTop: 3 }}>{formatUSD(leadTotal)}</div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, textAlign: 'center', padding: '14px 8px', backdropFilter: 'blur(20px)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 4 }}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
             <div style={{ fontSize: 7, opacity: 0.35, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Matching</div>
             <div style={{ fontWeight: 800, fontSize: 14, color: '#22c55e', fontFamily: "'Space Grotesk'", marginTop: 3 }}>{formatUSD(matchTotal)}</div>
           </div>
@@ -200,20 +230,29 @@ export default function IncomePage() {
           {items.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>No income yet</div>
           ) : (
-            items.map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>+{item.type === 'registration_bonus' ? '' : '$'}{(item.amt || 0).toFixed(2)}{item.type === 'registration_bonus' ? ' ONC' : ''}</div>
-                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{item.src} · {item.detail}</div>
+            items.map((item, i) => {
+              const iconColor = tab === 'referral' ? '#a78bfa' : tab === 'leadership' ? '#fbbf24' : '#22c55e';
+              const iconSvg = tab === 'referral'
+                ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20v-6" /><path d="M6 20v-4" /><path d="M18 20v-8" /><path d="M2 20h20" /><path d="M2 14l4-4 4 4 6-6 4 4" /></svg>
+                : tab === 'leadership'
+                ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>;
+              return (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {iconSvg}
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13 }}>+{item.type === 'registration_bonus' ? '' : '$'}{(item.amt || 0).toFixed(2)}{item.type === 'registration_bonus' ? ' ONC' : ''}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{item.src} · {item.detail}</div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>{item.date ? formatTimeAgo(item.date) : ''}</div>
+                    <div style={{ fontSize: 9, color: '#22c55e' }}>Completed</div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>{item.date ? formatTimeAgo(item.date) : ''}</div>
-                  <div style={{ fontSize: 9, color: '#22c55e' }}>Completed</div>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

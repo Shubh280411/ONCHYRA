@@ -6,7 +6,6 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
 import type React from 'react';
 import { detectApiUrl, formatUSD } from '@/lib/utils';
-import Loading from '@/components/ui/Loading';
 
 const PACKAGES = [
   { id: 'starter', name: 'Starter', price: 5, boost: 4, cap: 50, glow: '#a78bfa', bg: 'rgba(167,139,250,0.15)' },
@@ -69,7 +68,7 @@ export default function PackagesPage() {
 
   const buyLabel = useMemo(() => {
     if (!selected) return 'Select a package';
-    if (walletBalance < finalPrice) return `Insufficient balance (${formatUSD(finalPrice)} needed)`;
+    if (walletBalance < finalPrice) return `Insufficient wallet balance (${formatUSD(finalPrice)} needed)`;
     if (upgradeCredit > 0) return `Activate ${formatUSD(selected.price)} (Credit: ${formatUSD(upgradeCredit)})`;
     return `Activate for ${formatUSD(selected.price)}`;
   }, [selected, finalPrice, walletBalance, upgradeCredit]);
@@ -122,122 +121,148 @@ export default function PackagesPage() {
     setPurchasing(false);
   }
 
-  if (loading) return <Loading text="Loading packages..." />;
+  if (loading) {
+    return (
+      <div style={{ fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
+        <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', paddingTop: 60 }}>
+          <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.05)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>Loading packages...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen px-4 py-5 max-w-md mx-auto flex flex-col gap-3.5">
-      {ToastComponent}
+    <div style={{ fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
+      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {ToastComponent}
 
-      {/* Header */}
-      <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl px-4 py-3.5">
-        <Link href="/dashboard" className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.06] text-white shrink-0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-        </Link>
-        <span className="font-[family-name:var(--font-space-grotesk)] font-black text-lg bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent flex-1">
-          ONCHYRA
-        </span>
-        <span className="text-[11px] font-bold bg-purple-500/10 border border-purple-500/15 px-3.5 py-1.5 rounded-full whitespace-nowrap">
-          Wallet <span className="font-[family-name:var(--font-space-grotesk)] text-[var(--primary)]">{formatUSD(walletBalance)}</span>
-        </span>
-      </div>
-
-      {/* Title */}
-      <div className="flex items-center gap-2">
-        <h1 className="font-[family-name:var(--font-space-grotesk)] font-extrabold text-xl">Mining Packages</h1>
-        <div className="w-6 h-6 rounded-full bg-purple-500/15 border border-purple-500/25 flex items-center justify-center cursor-pointer">
-          <svg width="14" height="14" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
-        </div>
-      </div>
-      <p className="text-white/40 text-xs -mt-2">Activate a package to boost your mining rate</p>
-
-      {/* Active Package Card */}
-      {active && (
-        <div className="flex items-center gap-4 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-          <div className="flex items-center gap-3.5 flex-1">
-            <div className="w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0" style={{ background: active.bg }}>
-              {ICONS[active.id]}
-            </div>
-            <div>
-              <div className="font-[family-name:var(--font-space-grotesk)] font-black text-sm">{active.name}</div>
-              <div className="text-[11px] text-green-400 font-bold flex items-center gap-1 mt-0.5">
-                <svg width="12" height="12" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="18 2 22 6 18 10" /><path d="M22 6h-8a6 6 0 0 0-6 6v10" /></svg>
-                {packageBoost}x
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col items-center shrink-0">
-            <svg width="76" height="76" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-              <circle cx="40" cy="40" r="34" fill="none" strokeWidth="6" strokeLinecap="round" strokeDasharray={CIRCUM} strokeDashoffset={CIRCUM - (gaugePct / 100) * CIRCUM} transform="rotate(-90 40 40)" style={{ stroke: gaugeColor, transition: '0.8s' }} />
-              <text x="40" y="36" textAnchor="middle" fontSize="16" fontWeight="900" fontFamily="'Space Grotesk'" fill="white">{Math.round(gaugePct)}%</text>
-              <text x="40" y="50" textAnchor="middle" fontSize="7" fill="rgba(255,255,255,0.25)">Used</text>
-            </svg>
-            <div className="text-[9px] text-white/40 -mt-1 text-center">{formatUSD(packageUsage)} / {formatUSD(packageCap)}</div>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 22, padding: '14px 16px' }}>
+          <Link href="/dashboard" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, cursor: 'pointer', color: 'white', textDecoration: 'none', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
+          </Link>
+          <span style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flex: 1 }}>
+            ONCHYRA
+          </span>
+          <div style={{ fontSize: 11, fontWeight: 700, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.15)', padding: '6px 14px', borderRadius: 100, whiteSpace: 'nowrap' }}>
+            Wallet <span style={{ fontFamily: "'Space Grotesk'", color: '#a78bfa' }}>{formatUSD(walletBalance)}</span>
           </div>
         </div>
-      )}
 
-      {/* Package Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-        {PACKAGES.map(p => {
-          const isPurchased = purchasedPackages.includes(p.id);
-          const isSelected = selectedPkg === p.id && !isPurchased;
-          return (
-            <button
-              key={p.id}
-              onClick={() => !isPurchased && setSelectedPkg(p.id)}
-              disabled={isPurchased}
-              className={`relative rounded-2xl p-4 text-left transition-all border ${
-                isPurchased ? 'opacity-45 border-white/[0.06] bg-white/[0.02] cursor-not-allowed' :
-                isSelected ? 'border-[var(--primary)] bg-purple-500/[0.06]' :
-                'border-white/[0.06] bg-white/[0.03] active:scale-[0.97]'
-              }`}
-            >
-              {isPurchased && (
-                <div className="absolute top-2.5 right-2.5 text-[7px] font-extrabold px-2 py-0.5 rounded bg-green-500/15 text-green-400 border border-green-500/20 uppercase">DONE</div>
-              )}
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2.5" style={{ background: p.bg }}>
-                {ICONS[p.id]}
+        {/* Section title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 22, margin: '4px 0 2px' }}>Mining Packages</div>
+          <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <svg width="14" height="14" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+          </div>
+        </div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>Activate a package to boost your mining rate</div>
+
+        {/* Active Package Card */}
+        {active && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '16px 20px' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: active.bg }}>
+                {ICONS[active.id]}
               </div>
-              <div className="font-[family-name:var(--font-space-grotesk)] font-black text-sm">{p.name}</div>
-              <div className="font-[family-name:var(--font-space-grotesk)] font-black text-xl mt-1 bg-gradient-to-r from-white to-purple-400/50 bg-clip-text text-transparent">
-                {formatUSD(p.price)}
+              <div>
+                <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 15 }}>{active.name}</div>
+                <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                  <svg width="12" height="12" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="18 2 22 6 18 10" /><path d="M22 6h-8a6 6 0 0 0-6 6v10" /></svg>
+                  {packageBoost}x
+                </div>
               </div>
-              <div className="text-[10px] font-bold text-green-400 bg-green-500/[0.08] px-2.5 py-1 rounded-full mt-1.5 inline-block">{p.boost}x Mining</div>
-              <div className="text-[9px] text-white/25 mt-1.5">{formatUSD(p.cap)} max</div>
-            </button>
-          );
-        })}
-      </div>
+            </div>
+            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <svg width="76" height="76" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+                <circle cx="40" cy="40" r="34" fill="none" strokeWidth="6" strokeLinecap="round" strokeDasharray={CIRCUM} strokeDashoffset={CIRCUM - (gaugePct / 100) * CIRCUM} transform="rotate(-90 40 40)" style={{ stroke: gaugeColor, transition: '0.8s' }} />
+                <text x="40" y="36" textAnchor="middle" fontSize="16" fontWeight="900" fontFamily="'Space Grotesk'" fill="white">{Math.round(gaugePct)}%</text>
+                <text x="40" y="50" textAnchor="middle" fontSize="7" fill="rgba(255,255,255,0.25)">Used</text>
+              </svg>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', marginTop: -2, textAlign: 'center' }}>{formatUSD(packageUsage)} / {formatUSD(packageCap)}</div>
+            </div>
+          </div>
+        )}
 
-      {/* Info Card */}
-      <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
-        <div className="flex justify-between py-2.5 border-b border-white/[0.03] text-xs last:border-b-0">
-          <span className="text-white/40">Current Package</span>
-          <span className="font-bold">{active?.name || 'None'}</span>
+        {/* Package Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {PACKAGES.map(p => {
+            const isPurchased = purchasedPackages.includes(p.id);
+            const isSelected = selectedPkg === p.id && !isPurchased;
+            return (
+              <button
+                key={p.id}
+                onClick={() => !isPurchased && setSelectedPkg(p.id)}
+                disabled={isPurchased}
+                style={{
+                  border: `1px solid ${isSelected ? '#a78bfa' : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: 20, padding: '18px 16px 16px', cursor: isPurchased ? 'not-allowed' : 'pointer',
+                  transition: '0.25s', position: 'relative', overflow: 'hidden', textAlign: 'left',
+                  opacity: isPurchased ? 0.45 : 1,
+                  background: isSelected ? 'rgba(167,139,250,0.06)' : 'rgba(255,255,255,0.04)',
+                  color: 'white', fontFamily: "'Inter',sans-serif", fontSize: 12
+                }}
+              >
+                <div style={{ position: 'absolute', top: -30, right: -30, width: 80, height: 80, borderRadius: '50%', filter: 'blur(30px)', opacity: isSelected ? 0.35 : 0.15, pointerEvents: 'none', transition: '0.4s', background: p.glow }} />
+                {isPurchased && (
+                  <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 7, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, padding: '3px 8px', borderRadius: 6, background: 'rgba(34,197,94,0.15)', color: '#22c55e', zIndex: 2 }}>DONE</div>
+                )}
+                {!isPurchased && (
+                  <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 7, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, padding: '3px 8px', borderRadius: 6, background: 'rgba(167,139,250,0.1)', color: '#a78bfa' }}>{p.name[0]}</div>
+                )}
+                <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, background: p.bg }}>
+                  {ICONS[p.id]}
+                </div>
+                <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 15 }}>{p.name}</div>
+                {isPurchased ? (
+                  <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 22, marginTop: 4, color: 'rgba(255,255,255,0.3)' }}>Purchased</div>
+                ) : (
+                  <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 22, marginTop: 4, marginBottom: 4, background: 'linear-gradient(135deg,#fff 30%,rgba(167,139,250,0.5))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{formatUSD(p.price)}</div>
+                )}
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.08)', padding: '3px 10px', borderRadius: 100, display: 'inline-block', marginTop: 4 }}>{p.boost}x Mining</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 6 }}>{formatUSD(p.cap)} max</div>
+              </button>
+            );
+          })}
         </div>
-        <div className="flex justify-between py-2.5 border-b border-white/[0.03] text-xs last:border-b-0">
-          <span className="text-white/40">Mining Boost</span>
-          <span className="font-bold text-green-400">{packageBoost}x</span>
-        </div>
-        <div className="flex justify-between py-2.5 border-b border-white/[0.03] text-xs last:border-b-0">
-          <span className="text-white/40">Package Usage</span>
-          <span className="font-bold">{formatUSD(packageUsage)} / {formatUSD(packageCap)}</span>
-        </div>
-        <div className="flex justify-between py-2.5 text-xs last:border-b-0">
-          <span className="text-white/40">Upgrade Credit</span>
-          <span className="font-bold">{formatUSD(upgradeCredit)}</span>
-        </div>
-      </div>
 
-      {/* Buy Button */}
-      <button
-        onClick={purchase}
-        disabled={!selected || purchasing || walletBalance < finalPrice}
-        className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-black font-[family-name:var(--font-space-grotesk)] font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-      >
-        {purchasing ? 'Processing...' : buyLabel}
-      </button>
+        {/* Info Card */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Current Package</span>
+            <span style={{ fontWeight: 700 }}>{active?.name || 'None'}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Mining Boost</span>
+            <span style={{ fontWeight: 700, color: '#22c55e' }}>{packageBoost}x</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Package Usage</span>
+            <span style={{ fontWeight: 700 }}>{formatUSD(packageUsage)} / {formatUSD(packageCap)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontSize: 12 }}>
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Upgrade Credit</span>
+            <span style={{ fontWeight: 700 }}>{formatUSD(upgradeCredit)}</span>
+          </div>
+        </div>
+
+        {/* Buy Button */}
+        <button
+          onClick={purchase}
+          disabled={!selected || purchasing || walletBalance < finalPrice}
+          style={{
+            width: '100%', padding: 18, border: 'none', borderRadius: 16,
+            background: !selected || purchasing || walletBalance < finalPrice ? '#1a1a1a' : 'linear-gradient(135deg,#a78bfa,#60a5fa)',
+            color: !selected || purchasing || walletBalance < finalPrice ? '#444' : '#000',
+            fontWeight: 900, fontSize: 15, cursor: !selected || purchasing || walletBalance < finalPrice ? 'not-allowed' : 'pointer',
+            transition: '0.3s', fontFamily: "'Inter'"
+          }}
+        >
+          {purchasing ? 'Processing...' : buyLabel}
+        </button>
+      </div>
     </div>
   );
 }

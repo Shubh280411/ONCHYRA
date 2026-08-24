@@ -55,7 +55,6 @@ export default function ReferralsPage() {
 
   const PAGE_SIZE = 10;
 
-  // Derived stats
   const l1 = userData?.refLevel1 || 0;
   const l2 = userData?.refLevel2 || 0;
   const l3 = userData?.refLevel3 || 0;
@@ -70,7 +69,6 @@ export default function ReferralsPage() {
   const activeDirects = legStats?.activeDirects ?? userData?.activeDirects ?? 0;
   const totalDirects = legStats?.totalDirects ?? userData?.totalDirects ?? 0;
 
-  // Today's earnings
   const today = useMemo(() => {
     const todayStr = new Date().toDateString();
     let onc = 0, usdt = 0;
@@ -83,7 +81,6 @@ export default function ReferralsPage() {
     return { onc, usdt };
   }, [allCommissions]);
 
-  // Filtered team
   const filteredTeam = useMemo(() => {
     const level = parseInt(levelFilter);
     const list = teamData.levels[level as keyof typeof teamData.levels] || [];
@@ -95,11 +92,9 @@ export default function ReferralsPage() {
   const teamTotalPages = Math.ceil(filteredTeam.length / PAGE_SIZE) || 1;
   const pagedTeam = filteredTeam.slice((teamPage - 1) * PAGE_SIZE, teamPage * PAGE_SIZE);
 
-  // Paginated commissions
   const commTotalPages = Math.ceil(allCommissions.length / PAGE_SIZE) || 1;
   const pagedCommissions = allCommissions.slice((commPage - 1) * PAGE_SIZE, commPage * PAGE_SIZE);
 
-  // Load user data
   useEffect(() => {
     if (!uid) return;
     (async () => {
@@ -112,7 +107,6 @@ export default function ReferralsPage() {
     })();
   }, [uid, apiUrl]);
 
-  // Load leg stats
   useEffect(() => {
     if (!uid) return;
     (async () => {
@@ -123,7 +117,6 @@ export default function ReferralsPage() {
     })();
   }, [uid, apiUrl]);
 
-  // Load team
   useEffect(() => {
     if (!uid) return;
     (async () => {
@@ -138,7 +131,6 @@ export default function ReferralsPage() {
         if (res.ok) {
           const data = await res.json();
           setTeamData(data);
-          // Build L1 biz cache
           const cache: Record<string, number> = {};
           for (const u of data.levels[1] || []) {
             let biz = Number(u.totalPackageSpend) || 0;
@@ -159,7 +151,6 @@ export default function ReferralsPage() {
     })();
   }, [uid, apiUrl, levelFilter, teamPage]);
 
-  // Load commissions
   useEffect(() => {
     if (!uid) return;
     (async () => {
@@ -198,319 +189,322 @@ export default function ReferralsPage() {
   }
 
   return (
-    <div className="min-h-screen px-4 py-5 max-w-md mx-auto flex flex-col gap-3.5">
-      {ToastComponent}
+    <div style={{ fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
+      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {ToastComponent}
 
-      {/* Header */}
-      <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl px-4 py-3.5">
-        <Link
-          href="/dashboard"
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.06] text-white shrink-0"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-        </Link>
-        <span className="font-[family-name:var(--font-space-grotesk)] font-black text-lg bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent flex-1">
-          ONCHYRA
-        </span>
-        <div className="w-9" />
-      </div>
-
-      {/* Referral code hero */}
-      <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/5 border border-purple-500/[0.12] rounded-3xl p-6 text-center relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-purple-500/[0.08] blur-2xl pointer-events-none" />
-        <div className="text-[10px] font-bold uppercase tracking-[2px] text-white/25">Your Referral Code</div>
-        <div className="font-[family-name:var(--font-space-grotesk)] font-black text-3xl tracking-[6px] mt-1.5 bg-gradient-to-r from-white to-purple-400/60 bg-clip-text text-transparent">
-          {userData?.referralCode || '---'}
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 22, padding: '14px 16px' }}>
+          <Link href="/dashboard" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, cursor: 'pointer', color: 'white', textDecoration: 'none', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
+          </Link>
+          <span style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flex: 1 }}>
+            ONCHYRA
+          </span>
+          <div style={{ width: 36 }} />
         </div>
-        <button onClick={copyLink} className="w-full mt-3 py-3.5 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-black font-[family-name:var(--font-space-grotesk)] font-black text-sm">
-          COPY INVITE LINK
-        </button>
-      </div>
 
-      {loadingStats ? (
-        <div className="flex justify-center items-center py-8">
-          <div className="w-8 h-8 border-2 border-white/10 border-t-[var(--primary)] rounded-full animate-spin" />
-        </div>
-      ) : (
-        <>
-          {/* Stats grid */}
-          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center gap-3 p-2 bg-transparent">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-500/[0.12] shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                </div>
-                <div>
-                  <div className="font-[family-name:var(--font-space-grotesk)] font-black text-base">{totalNetwork}</div>
-                  <div className="text-[9px] text-white/25 uppercase tracking-wider">Network</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-2 bg-transparent">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/[0.12] shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
-                </div>
-                <div>
-                  <div className="font-[family-name:var(--font-space-grotesk)] font-black text-base">{formatUSD(totalBiz)}</div>
-                  <div className="text-[9px] text-white/25 uppercase tracking-wider">Business</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-2 bg-transparent">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-500/[0.12] shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                </div>
-                <div>
-                  <div className="font-[family-name:var(--font-space-grotesk)] font-black text-base">{totalOnc.toFixed(2)} ONC</div>
-                  <div className="text-[9px] text-white/25 uppercase tracking-wider">ONC Bonus</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-2 bg-transparent">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-500/[0.12] shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
-                </div>
-                <div>
-                  <div className="font-[family-name:var(--font-space-grotesk)] font-black text-base">{formatUSD(userData?.totalCommissions || 0)}</div>
-                  <div className="text-[9px] text-white/25 uppercase tracking-wider">Commission</div>
-                </div>
-              </div>
-            </div>
+        {/* Referral hero */}
+        <div style={{ background: 'linear-gradient(135deg,rgba(167,139,250,0.1),rgba(96,165,250,0.05))', border: '1px solid rgba(167,139,250,0.12)', borderRadius: 24, padding: '24px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'rgba(167,139,250,0.08)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: 'rgba(255,255,255,0.25)' }}>Your Referral Code</div>
+          <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 32, letterSpacing: 6, marginTop: 6, marginBottom: 6, background: 'linear-gradient(135deg,#fff 20%,rgba(167,139,250,0.6))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            {userData?.referralCode || '---'}
           </div>
+          <button onClick={copyLink} style={{ width: '100%', padding: 14, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontWeight: 900, fontSize: 13, cursor: 'pointer', fontFamily: "'Inter'", marginTop: 12 }}>
+            COPY INVITE LINK
+          </button>
+        </div>
 
-          {/* Directs + legs */}
-          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center gap-3 p-2 bg-transparent">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-500/[0.12] shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
-                </div>
-                <div>
-                  <div className="font-[family-name:var(--font-space-grotesk)] font-black text-base">{activeDirects}/{totalDirects}</div>
-                  <div className="text-[9px] text-white/25 uppercase tracking-wider">Active / Total Direct</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-2 bg-transparent">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-500/[0.12] shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                </div>
-                <div>
-                  <div className="font-[family-name:var(--font-space-grotesk)] font-black text-base">{formatUSD(legABiz)}</div>
-                  <div className="text-[9px] text-white/25 uppercase tracking-wider">Leg A</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-2 bg-transparent">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-500/[0.12] shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-                </div>
-                <div>
-                  <div className="font-[family-name:var(--font-space-grotesk)] font-black text-base">{formatUSD(legBBiz)}</div>
-                  <div className="text-[9px] text-white/25 uppercase tracking-wider">Leg B</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-2 bg-transparent">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-500/[0.12] shrink-0">
-                  <svg width="18" height="18" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                </div>
-                <div>
-                  <div className="font-[family-name:var(--font-space-grotesk)] font-black text-sm flex gap-1.5 items-center flex-wrap">
-                    <span>{today.onc.toFixed(2)} ONC</span>
-                    <span className="text-[9px] opacity-20">|</span>
-                    <span>{formatUSD(today.usdt)}</span>
+        {loadingStats ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '32px 0' }}>
+            <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.05)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        ) : (
+          <>
+            {/* Stats grid 1 */}
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(167,139,250,0.12)' }}>
+                    <svg width="20" height="20" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                   </div>
-                  <div className="text-[9px] text-white/25 uppercase tracking-wider">Today&apos;s Earnings</div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{totalNetwork}</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Network</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(96,165,250,0.12)' }}>
+                    <svg width="20" height="20" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(totalBiz)}</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Business</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(245,158,11,0.12)' }}>
+                    <svg width="20" height="20" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{totalOnc.toFixed(2)} ONC</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>ONC Bonus</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(34,197,94,0.12)' }}>
+                    <svg width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(userData?.totalCommissions || 0)}</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Commission</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Level breakdown */}
-          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-            <div className="text-[10px] font-extrabold text-white/30 uppercase tracking-wider mb-2">Level Breakdown</div>
-            <div className="flex justify-between items-center py-2.5 border-b border-white/[0.03] last:border-b-0">
-              <span><span className="text-[var(--primary)] font-extrabold">Vanguard</span> <span className="text-white/30">(L1)</span></span>
-              <span className="text-sm">{l1} users &middot; {l1Onc.toFixed(2)} ONC</span>
+            {/* Stats grid 2 */}
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(167,139,250,0.12)' }}>
+                    <svg width="20" height="20" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{activeDirects}/{totalDirects}</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Active / Total Direct</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(34,197,94,0.12)' }}>
+                    <svg width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(legABiz)}</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Leg A</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(245,158,11,0.12)' }}>
+                    <svg width="20" height="20" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(legBBiz)}</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Leg B</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(34,197,94,0.12)' }}>
+                    <svg width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>
+                      <span>{today.onc.toFixed(2)} ONC</span>
+                      <span style={{ fontSize: 9, opacity: 0.2 }}>|</span>
+                      <span>{formatUSD(today.usdt)}</span>
+                    </div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Today&apos;s Earnings</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-white/[0.03] last:border-b-0">
-              <span><span className="text-[var(--secondary)] font-extrabold">Guardians</span> <span className="text-white/30">(L2)</span></span>
-              <span className="text-sm">{l2} users &middot; {l2Onc.toFixed(2)} ONC</span>
-            </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-white/[0.03] last:border-b-0">
-              <span><span className="text-yellow-400 font-extrabold">Seekers</span> <span className="text-white/30">(L3)</span></span>
-              <span className="text-sm">{l3} users &middot; {l3Onc.toFixed(2)} ONC</span>
-            </div>
-            <div className="flex justify-between items-center pt-1 border-t border-white/[0.06] mt-1">
-              <span className="font-extrabold">Total</span>
-              <span className="text-sm">{totalNetwork} users &middot; {totalOnc.toFixed(2)} ONC</span>
-            </div>
-          </div>
-        </>
-      )}
 
-      {/* Tabs */}
-      <div className="flex gap-1.5">
-        <button
-          onClick={() => setActiveTab('team')}
-          className={`flex-1 py-2.5 rounded-xl border text-[11px] font-bold transition-all ${
-            activeTab === 'team'
-              ? 'border-[var(--primary)] text-white bg-purple-500/[0.06]'
-              : 'border-white/[0.06] text-white/30 bg-white/[0.03]'
-          }`}
-        >
-          Network
-        </button>
-        <button
-          onClick={() => setActiveTab('comm')}
-          className={`flex-1 py-2.5 rounded-xl border text-[11px] font-bold transition-all ${
-            activeTab === 'comm'
-              ? 'border-[var(--primary)] text-white bg-purple-500/[0.06]'
-              : 'border-white/[0.06] text-white/30 bg-white/[0.03]'
-          }`}
-        >
-          Commissions
-        </button>
-      </div>
+            {/* Level breakdown */}
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 16 }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Level Breakdown</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+                <span><span style={{ color: '#a78bfa', fontWeight: 800 }}>Vanguard</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>(L1)</span></span>
+                <span>{l1} users · {l1Onc.toFixed(2)} ONC</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+                <span><span style={{ color: '#60a5fa', fontWeight: 800 }}>Guardians</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>(L2)</span></span>
+                <span>{l2} users · {l2Onc.toFixed(2)} ONC</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: 'none', fontSize: 12 }}>
+                <span><span style={{ color: '#f59e0b', fontWeight: 800 }}>Seekers</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>(L3)</span></span>
+                <span>{l3} users · {l3Onc.toFixed(2)} ONC</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0 0', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 4 }}>
+                <span style={{ fontWeight: 800 }}>Total</span>
+                <span>{totalNetwork} users · {totalOnc.toFixed(2)} ONC</span>
+              </div>
+            </div>
+          </>
+        )}
 
-      {/* Team view */}
-      {activeTab === 'team' && (
-        <div>
-          <select
-            value={levelFilter}
-            onChange={(e) => handleLevelChange(e.target.value)}
-            className="w-full px-3.5 py-3 rounded-xl border border-white/[0.06] bg-white/[0.03] text-white text-xs font-bold outline-none mb-2"
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            onClick={() => setActiveTab('team')}
+            style={{
+              flex: 1, padding: 10, border: `1px solid ${activeTab === 'team' ? '#a78bfa' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: 12, background: activeTab === 'team' ? 'rgba(167,139,250,0.06)' : 'rgba(255,255,255,0.04)',
+              textAlign: 'center', fontSize: 11, fontWeight: 700,
+              color: activeTab === 'team' ? '#fff' : 'rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s'
+            }}
           >
-            <option value="1">Vanguard (L1) &mdash; {l1Onc.toFixed(2)} ONC</option>
-            <option value="2">Guardians (L2) &mdash; {l2Onc.toFixed(2)} ONC</option>
-            <option value="3">Seekers (L3) &mdash; {l3Onc.toFixed(2)} ONC</option>
-          </select>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setTeamPage(1); }}
-            placeholder="Search member by name..."
-            className="w-full px-3.5 py-3 rounded-xl border border-white/[0.06] bg-white/[0.03] text-white text-xs font-semibold outline-none mb-2"
-          />
+            Network
+          </button>
+          <button
+            onClick={() => setActiveTab('comm')}
+            style={{
+              flex: 1, padding: 10, border: `1px solid ${activeTab === 'comm' ? '#a78bfa' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: 12, background: activeTab === 'comm' ? 'rgba(167,139,250,0.06)' : 'rgba(255,255,255,0.04)',
+              textAlign: 'center', fontSize: 11, fontWeight: 700,
+              color: activeTab === 'comm' ? '#fff' : 'rgba(255,255,255,0.3)', cursor: 'pointer', transition: '0.2s'
+            }}
+          >
+            Commissions
+          </button>
+        </div>
 
-          {loadingTeam ? (
-            <div className="py-5 text-center text-xs text-white/30">Loading team...</div>
-          ) : pagedTeam.length === 0 ? (
-            <div className="py-10 text-center text-xs text-white/20">{searchQuery ? 'No members match your search' : 'No members in this level'}</div>
-          ) : (
-            <>
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden">
-                {pagedTeam.map((u) => {
-                  const biz = l1BizCache[u.referralCode] ?? (Number(u.totalPackageSpend) || 0);
-                  const teamCount = (Number(u.refLevel1) || 0) + (Number(u.refLevel2) || 0) + (Number(u.refLevel3) || 0);
-                  return (
-                    <div key={u.uid} className="flex justify-between items-center px-4 py-3.5 border-b border-white/[0.03] last:border-b-0 text-xs">
-                      <div className="flex items-center gap-2.5">
-                        <div>
-                          <div className="font-bold text-[13px]">{u.name || 'User'}</div>
-                          {u.email && <div className="text-[9px] text-white/35 mt-0.5">{u.email}</div>}
-                          <div className="flex gap-2 mt-0.5 flex-wrap text-[9px] text-white/25">
-                            <span>{fmtDate(u.createdAt as unknown as number)}</span>
-                            <span>Team: {teamCount}</span>
-                            <span>Biz: {formatUSD(biz)}</span>
-                            {u.activePackage ? (
-                              <span className="text-[7px] font-extrabold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/15 uppercase">Package</span>
-                            ) : (
-                              <span className="text-[7px] font-extrabold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/15 uppercase">No Pkg</span>
-                            )}
+        {/* Team view */}
+        {activeTab === 'team' && (
+          <div>
+            <select
+              value={levelFilter}
+              onChange={(e) => handleLevelChange(e.target.value)}
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: 'white', fontSize: 12, fontWeight: 700, outline: 'none', marginBottom: 8 }}
+            >
+              <option value="1">Vanguard (L1) &mdash; {l1Onc.toFixed(2)} ONC</option>
+              <option value="2">Guardians (L2) &mdash; {l2Onc.toFixed(2)} ONC</option>
+              <option value="3">Seekers (L3) &mdash; {l3Onc.toFixed(2)} ONC</option>
+            </select>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setTeamPage(1); }}
+              placeholder="Search member by name..."
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: 'white', fontSize: 12, fontWeight: 600, outline: 'none', marginBottom: 8, boxSizing: 'border-box' }}
+            />
+
+            {loadingTeam ? (
+              <div style={{ textAlign: 'center', padding: 20, color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>Loading team...</div>
+            ) : pagedTeam.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>{searchQuery ? 'No members match your search' : 'No members in this level'}</div>
+            ) : (
+              <>
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, overflow: 'hidden' }}>
+                  {pagedTeam.map((u) => {
+                    const biz = l1BizCache[u.referralCode] ?? (Number(u.totalPackageSpend) || 0);
+                    const teamCount = (Number(u.refLevel1) || 0) + (Number(u.refLevel2) || 0) + (Number(u.refLevel3) || 0);
+                    return (
+                      <div key={u.uid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{u.name || 'User'}</div>
+                            {u.email && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>{u.email}</div>}
+                            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 3, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              <span>{fmtDate(u.createdAt as unknown as number)}</span>
+                              <span>Team: {teamCount}</span>
+                              <span>Biz: {formatUSD(biz)}</span>
+                              {u.activePackage ? (
+                                <span style={{ fontSize: 7, fontWeight: 800, padding: '2px 7px', borderRadius: 5, background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.15)', textTransform: 'uppercase' }}>Package</span>
+                              ) : (
+                                <span style={{ fontSize: 7, fontWeight: 800, padding: '2px 7px', borderRadius: 5, background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.15)', textTransform: 'uppercase' }}>No Pkg</span>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        <span style={{ fontSize: 9, padding: '4px 10px', borderRadius: 6, background: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontWeight: 800 }}>L{levelFilter}</span>
                       </div>
-                      <span className="text-[9px] px-2.5 py-1 rounded-md bg-purple-500/10 text-[var(--primary)] font-extrabold">L{levelFilter}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Pagination */}
-              {teamTotalPages > 1 && (
-                <div className="flex gap-1 justify-center mt-2 flex-wrap">
-                  {teamPage > 1 && (
-                    <button onClick={() => setTeamPage(teamPage - 1)} className="px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.03] text-white font-bold text-[11px]">&lsaquo; Prev</button>
-                  )}
-                  {Array.from({ length: teamTotalPages }, (_, i) => i + 1).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setTeamPage(p)}
-                      className={`px-3 py-2 rounded-lg border font-bold text-[11px] ${
-                        p === teamPage
-                          ? 'bg-[var(--primary)] text-black border-[var(--primary)]'
-                          : 'bg-white/[0.03] border-white/[0.06] text-white'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                  {teamPage < teamTotalPages && (
-                    <button onClick={() => setTeamPage(teamPage + 1)} className="px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.03] text-white font-bold text-[11px]">Next &rsaquo;</button>
-                  )}
+                    );
+                  })}
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
 
-      {/* Commissions view */}
-      {activeTab === 'comm' && (
-        <div>
-          {loadingComm ? (
-            <div className="py-5 text-center text-xs text-white/30">Loading commissions...</div>
-          ) : allCommissions.length === 0 ? (
-            <div className="py-10 text-center text-xs text-white/20">No commissions yet</div>
-          ) : (
-            <>
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden">
-                {pagedCommissions.map((c) => {
-                  const typeLabel = c.type === 'registration_bonus' ? 'Registration' : c.type === 'matching_bonus' ? 'Matching' : 'Package';
-                  const typeColor = c.type === 'registration_bonus' ? 'text-yellow-400' : c.type === 'matching_bonus' ? 'text-[var(--secondary)]' : 'text-green-400';
-                  const cur = c.type === 'registration_bonus' ? ' ONC' : '$';
-                  return (
-                    <div key={c.id} className="flex justify-between items-center px-4 py-3.5 border-b border-white/[0.03] last:border-b-0 text-xs">
-                      <div className="flex items-center gap-2.5">
-                        <div>
-                          <div className="font-bold text-[13px]">{c.fromName || 'User'}</div>
-                          <div className="flex gap-2 mt-0.5 flex-wrap text-[9px] text-white/25">
-                            <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-white/[0.04] ${typeColor}`}>{typeLabel}</span>
-                            <span>Level {c.level}</span>
-                            <span>{fmtDate(c.createdAt)}</span>
+                {/* Pagination */}
+                {teamTotalPages > 1 && (
+                  <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+                    {teamPage > 1 && (
+                      <button onClick={() => setTeamPage(teamPage - 1)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: 'white', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>&lsaquo; Prev</button>
+                    )}
+                    {Array.from({ length: teamTotalPages }, (_, i) => i + 1).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setTeamPage(p)}
+                        style={{
+                          padding: '8px 12px', borderRadius: 8, border: '1px solid',
+                          borderColor: p === teamPage ? '#a78bfa' : 'rgba(255,255,255,0.1)',
+                          background: p === teamPage ? '#a78bfa' : 'rgba(255,255,255,0.04)',
+                          color: p === teamPage ? '#000' : 'white', fontWeight: 700, fontSize: 11, cursor: 'pointer'
+                        }}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    {teamPage < teamTotalPages && (
+                      <button onClick={() => setTeamPage(teamPage + 1)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: 'white', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>Next &rsaquo;</button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Commissions view */}
+        {activeTab === 'comm' && (
+          <div>
+            {loadingComm ? (
+              <div style={{ textAlign: 'center', padding: 20, color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>Loading commissions...</div>
+            ) : allCommissions.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>No commissions yet</div>
+            ) : (
+              <>
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, overflow: 'hidden' }}>
+                  {pagedCommissions.map((c) => {
+                    const typeLabel = c.type === 'registration_bonus' ? 'Registration' : c.type === 'matching_bonus' ? 'Matching' : 'Package';
+                    const typeColor = c.type === 'registration_bonus' ? '#f59e0b' : c.type === 'matching_bonus' ? '#60a5fa' : '#22c55e';
+                    const cur = c.type === 'registration_bonus' ? ' ONC' : '$';
+                    return (
+                      <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{c.fromName || 'User'}</div>
+                            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 3, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 8, fontWeight: 800, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,255,255,0.04)', color: typeColor }}>{typeLabel}</span>
+                              <span>Level {c.level}</span>
+                              <span>{fmtDate(c.createdAt)}</span>
+                            </div>
                           </div>
                         </div>
+                        <span style={{ fontWeight: 800, color: '#22c55e' }}>+{cur}{(Number(c.amount) || 0).toFixed(2)}</span>
                       </div>
-                      <span className="font-extrabold text-green-400">+{cur}{(Number(c.amount) || 0).toFixed(2)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Pagination */}
-              {commTotalPages > 1 && (
-                <div className="flex gap-1 justify-center mt-2 flex-wrap">
-                  {commPage > 1 && (
-                    <button onClick={() => setCommPage(commPage - 1)} className="px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.03] text-white font-bold text-[11px]">&lsaquo; Prev</button>
-                  )}
-                  {Array.from({ length: commTotalPages }, (_, i) => i + 1).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setCommPage(p)}
-                      className={`px-3 py-2 rounded-lg border font-bold text-[11px] ${
-                        p === commPage
-                          ? 'bg-[var(--primary)] text-black border-[var(--primary)]'
-                          : 'bg-white/[0.03] border-white/[0.06] text-white'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                  {commPage < commTotalPages && (
-                    <button onClick={() => setCommPage(commPage + 1)} className="px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.03] text-white font-bold text-[11px]">Next &rsaquo;</button>
-                  )}
+                    );
+                  })}
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
+
+                {/* Pagination */}
+                {commTotalPages > 1 && (
+                  <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+                    {commPage > 1 && (
+                      <button onClick={() => setCommPage(commPage - 1)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: 'white', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>&lsaquo; Prev</button>
+                    )}
+                    {Array.from({ length: commTotalPages }, (_, i) => i + 1).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setCommPage(p)}
+                        style={{
+                          padding: '8px 12px', borderRadius: 8, border: '1px solid',
+                          borderColor: p === commPage ? '#a78bfa' : 'rgba(255,255,255,0.1)',
+                          background: p === commPage ? '#a78bfa' : 'rgba(255,255,255,0.04)',
+                          color: p === commPage ? '#000' : 'white', fontWeight: 700, fontSize: 11, cursor: 'pointer'
+                        }}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    {commPage < commTotalPages && (
+                      <button onClick={() => setCommPage(commPage + 1)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: 'white', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>Next &rsaquo;</button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,8 +1,6 @@
 import Link from 'next/link';
 import ParticlesBg from './components/ParticlesBg';
-
-const fontSpaceGrotesk = 'font-[family-name:var(--font-space-grotesk)]';
-const fontInter = 'font-[family-name:var(--font-inter)]';
+import ScrollReveal from './components/ScrollReveal';
 
 export default function Home() {
   return (
@@ -24,27 +22,25 @@ export default function Home() {
         WebkitBackdropFilter: 'blur(20px)',
         background: 'rgba(5,6,15,0.6)',
         borderBottom: '1px solid var(--border)',
+        transition: 'transform .3s',
       }}>
         <Link href="/" style={{
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          fontFamily: 'Space Grotesk, sans-serif',
+          fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
           fontWeight: 900,
           fontSize: 18,
           textDecoration: 'none',
           color: 'white',
         }}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style={{ borderRadius: 8 }}>
-            <rect width="32" height="32" rx="8" fill="url(#logo-grad)" />
-            <path d="M10 22V10h4l4 6 4-6h4v12h-3.5v-7.5L19 18l-3.5-3.5V22H10z" fill="#000" />
-            <defs>
-              <linearGradient id="logo-grad" x1="0" y1="0" x2="32" y2="32">
-                <stop stopColor="#a78bfa" />
-                <stop offset="1" stopColor="#60a5fa" />
-              </linearGradient>
-            </defs>
-          </svg>
+          <img
+            src="/logo.png"
+            alt="ONCHYRA"
+            width={32}
+            height={32}
+            style={{ borderRadius: 8, objectFit: 'contain' }}
+          />
           <span style={{
             background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
             WebkitBackgroundClip: 'text',
@@ -86,6 +82,7 @@ export default function Home() {
             fontWeight: 700,
             fontSize: 12,
             textDecoration: 'none',
+            transition: 'opacity .2s',
           }}>
             Launch App
           </Link>
@@ -104,6 +101,7 @@ export default function Home() {
         textAlign: 'center',
         padding: '120px 24px 80px',
       }}>
+        {/* Badge */}
         <div style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -117,6 +115,8 @@ export default function Home() {
           fontWeight: 600,
           letterSpacing: '.3px',
           marginBottom: 28,
+          opacity: 0,
+          animation: 'fadeUp .6s .2s forwards',
         }}>
           <span style={{
             width: 5,
@@ -128,12 +128,15 @@ export default function Home() {
           Decentralized Referral Protocol
         </div>
 
+        {/* Heading */}
         <h1 style={{
-          fontFamily: 'Space Grotesk, sans-serif',
+          fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
           fontWeight: 900,
           fontSize: 'clamp(42px, 8vw, 88px)',
           lineHeight: 1.05,
           letterSpacing: '-2px',
+          opacity: 0,
+          animation: 'fadeUp .7s .3s forwards',
         }}>
           Referrals,<br />
           <span style={{
@@ -145,22 +148,28 @@ export default function Home() {
           }}>refracted into value.</span>
         </h1>
 
+        {/* Subtitle */}
         <p style={{
           fontSize: 'clamp(15px, 2vw, 18px)',
           color: 'var(--text)',
           maxWidth: 540,
           lineHeight: 1.7,
           marginTop: 20,
+          opacity: 0,
+          animation: 'fadeUp .7s .45s forwards',
         }}>
           A transparent, on-chain referral protocol. Every commission is verifiable, every level is trackable, and the community earns together.
         </p>
 
+        {/* Actions */}
         <div style={{
           display: 'flex',
           gap: 12,
           marginTop: 36,
           flexWrap: 'wrap',
           justifyContent: 'center',
+          opacity: 0,
+          animation: 'fadeUp .7s .6s forwards',
         }}>
           <Link href="/register" style={{
             padding: '12px 28px',
@@ -177,6 +186,7 @@ export default function Home() {
             background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
             color: '#000',
             boxShadow: '0 4px 24px rgba(167,139,250,0.25)',
+            transition: 'all .25s',
           }}>
             Get Started
           </Link>
@@ -194,11 +204,13 @@ export default function Home() {
             background: 'transparent',
             color: 'white',
             border: '1px solid var(--border)',
+            transition: 'all .25s',
           }}>
             Learn More
           </a>
         </div>
 
+        {/* Stats Grid */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
@@ -206,6 +218,8 @@ export default function Home() {
           maxWidth: 720,
           width: '100%',
           marginTop: 64,
+          opacity: 0,
+          animation: 'fadeUp .7s .75s forwards',
         }}>
           {[
             { num: '...', label: 'Users' },
@@ -222,7 +236,7 @@ export default function Home() {
               transition: 'all .3s',
             }}>
               <div style={{
-                fontFamily: 'Space Grotesk, sans-serif',
+                fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
                 fontWeight: 800,
                 fontSize: stat.numFontSize ?? 28,
                 background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
@@ -240,7 +254,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* scroll indicator */}
+        {/* Scroll Indicator */}
         <div style={{
           position: 'absolute',
           bottom: 32,
@@ -254,6 +268,8 @@ export default function Home() {
           fontSize: 10,
           letterSpacing: 1,
           textTransform: 'uppercase',
+          opacity: 0,
+          animation: 'fadeUp .7s 1s forwards',
         }}>
           Scroll
           <div style={{
@@ -266,107 +282,116 @@ export default function Home() {
       </section>
 
       {/* ─── About ─── */}
-      <section id="about" style={{ position: 'relative', zIndex: 1, padding: '100px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 60,
-          alignItems: 'center',
-          marginTop: 40,
-        }}>
-          {/* Visual rings */}
+      <section id="about" style={{
+        position: 'relative',
+        zIndex: 1,
+        padding: '100px 24px',
+        maxWidth: 1100,
+        margin: '0 auto',
+      }}>
+        <ScrollReveal>
           <div style={{
-            position: 'relative',
-            aspectRatio: '1',
-            maxWidth: 440,
-            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 60,
+            alignItems: 'center',
+            marginTop: 40,
           }}>
+            {/* Visual Rings */}
             <div style={{
-              position: 'absolute',
-              inset: '38%',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, var(--primary), transparent)',
-              opacity: 0.4,
-              filter: 'blur(20px)',
-              animation: 'pulse 3s infinite',
-            }} />
-            {[5, 18, 31, 44].map((pct, i) => (
-              <div key={i} style={{
+              position: 'relative',
+              aspectRatio: '1',
+              maxWidth: 440,
+              margin: '0 auto',
+            }}>
+              <div style={{
                 position: 'absolute',
-                inset: `${pct}%`,
+                inset: '38%',
                 borderRadius: '50%',
-                border: '1px solid rgba(167,139,250,0.1)',
-                animation: `spin ${30 - i * 5}s linear infinite${i % 2 === 1 ? ' reverse' : ''}`,
+                background: 'radial-gradient(circle, var(--primary), transparent)',
+                opacity: 0.4,
+                filter: 'blur(20px)',
+                animation: 'pulse 3s infinite',
               }} />
-            ))}
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: 'Space Grotesk, sans-serif',
-              fontWeight: 900,
-              fontSize: 14,
-              color: 'var(--primary)',
-            }}>ONCHYRA</div>
-          </div>
-
-          <div>
-            <div style={{
-              display: 'inline-block',
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              color: 'var(--primary)',
-              marginBottom: 12,
-            }}>About</div>
-            <h2 style={{
-              fontFamily: 'Space Grotesk, sans-serif',
-              fontWeight: 800,
-              fontSize: 'clamp(28px, 4vw, 42px)',
-              lineHeight: 1.15,
-              marginBottom: 16,
-            }}>Understandable before trust.</h2>
-            <p style={{
-              color: 'var(--text)',
-              fontSize: 15,
-              lineHeight: 1.7,
-              maxWidth: 560,
-            }}>
-              ONCHYRA is a decentralised referral protocol built on Polygon. Every referral, every commission, every level — all verifiable on-chain. No closed doors, no hidden mechanics, no promises you can&apos;t check.
-            </p>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 10,
-              marginTop: 20,
-            }}>
-              {[
-                'On-chain commissions',
-                '3-level deep downline',
-                'Real-time dashboard',
-                'Community governed',
-              ].map((feat) => (
-                <div key={feat} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: 13,
-                  color: 'var(--text)',
-                  padding: '10px 14px',
-                  background: 'var(--card)',
-                  borderRadius: 10,
-                  border: '1px solid var(--border)',
-                }}>
-                  <span style={{ color: 'var(--primary)', fontSize: 15 }}>+</span>
-                  {feat}
-                </div>
+              {[5, 18, 31, 44].map((pct, i) => (
+                <div key={i} style={{
+                  position: 'absolute',
+                  inset: `${pct}%`,
+                  borderRadius: '50%',
+                  border: '1px solid rgba(167,139,250,0.1)',
+                  animation: `spin ${30 - i * 5}s linear infinite${i % 2 === 1 ? ' reverse' : ''}`,
+                }} />
               ))}
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+                fontWeight: 900,
+                fontSize: 14,
+                color: 'var(--primary)',
+              }}>ONCHYRA</div>
+            </div>
+
+            {/* Text */}
+            <div>
+              <div style={{
+                display: 'inline-block',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+                color: 'var(--primary)',
+                marginBottom: 12,
+              }}>About</div>
+              <h2 style={{
+                fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+                fontWeight: 800,
+                fontSize: 'clamp(28px, 4vw, 42px)',
+                lineHeight: 1.15,
+                marginBottom: 16,
+              }}>Understandable before trust.</h2>
+              <p style={{
+                color: 'var(--text)',
+                fontSize: 14,
+                lineHeight: 1.8,
+                marginBottom: 20,
+              }}>
+                ONCHYRA is a decentralised referral protocol built on Polygon. Every referral, every commission, every level — all verifiable on-chain. No closed doors, no hidden mechanics, no promises you can&apos;t check.
+              </p>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 10,
+                marginTop: 20,
+              }}>
+                {[
+                  'On-chain commissions',
+                  '3-level deep downline',
+                  'Real-time dashboard',
+                  'Community governed',
+                ].map((feat) => (
+                  <div key={feat} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontSize: 13,
+                    color: 'var(--text)',
+                    padding: '10px 14px',
+                    background: 'var(--card)',
+                    borderRadius: 10,
+                    border: '1px solid var(--border)',
+                  }}>
+                    <span style={{ color: 'var(--primary)', fontSize: 15 }}>+</span>
+                    {feat}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
 
       {/* ─── Features ─── */}
@@ -378,31 +403,33 @@ export default function Home() {
         margin: '0 auto',
         textAlign: 'center',
       }}>
-        <div style={{
-          display: 'inline-block',
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '1.5px',
-          textTransform: 'uppercase',
-          color: 'var(--primary)',
-          marginBottom: 12,
-        }}>Features</div>
-        <h2 style={{
-          fontFamily: 'Space Grotesk, sans-serif',
-          fontWeight: 800,
-          fontSize: 'clamp(28px, 4vw, 42px)',
-          lineHeight: 1.15,
-          marginBottom: 16,
-        }}>Built different.</h2>
-        <p style={{
-          color: 'var(--text)',
-          fontSize: 15,
-          lineHeight: 1.7,
-          maxWidth: 560,
-          margin: '0 auto 40px',
-        }}>
-          Every layer of the protocol is designed for transparency, accountability, and long-term value.
-        </p>
+        <ScrollReveal>
+          <div style={{
+            display: 'inline-block',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+            color: 'var(--primary)',
+            marginBottom: 12,
+          }}>Features</div>
+          <h2 style={{
+            fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+            fontWeight: 800,
+            fontSize: 'clamp(28px, 4vw, 42px)',
+            lineHeight: 1.15,
+            marginBottom: 16,
+          }}>Built different.</h2>
+          <p style={{
+            color: 'var(--text)',
+            fontSize: 15,
+            lineHeight: 1.7,
+            maxWidth: 560,
+            margin: '0 auto 40px',
+          }}>
+            Every layer of the protocol is designed for transparency, accountability, and long-term value.
+          </p>
+        </ScrollReveal>
 
         <div style={{
           display: 'grid',
@@ -419,41 +446,43 @@ export default function Home() {
             { icon: 'P', title: 'Instant Payouts', desc: 'Commissions are credited the moment a referral completes a qualifying action. No delay, no manual processing.' },
             { icon: 'N', title: 'Polygon Native', desc: 'Built on Polygon for fast, low-cost transactions. Full ERC-20 compatibility with ONC token integration.' },
           ].map((card) => (
-            <div key={card.icon} style={{
-              background: 'var(--card)',
-              border: '1px solid var(--border)',
-              borderRadius: 20,
-              padding: '32px 24px',
-              transition: 'all .3s',
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
+            <ScrollReveal key={card.icon}>
               <div style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                background: 'rgba(167,139,250,0.1)',
-                border: '1px solid rgba(167,139,250,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 20,
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontWeight: 700,
-                marginBottom: 16,
-              }}>{card.icon}</div>
-              <h3 style={{
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontWeight: 700,
-                fontSize: 16,
-                marginBottom: 8,
-              }}>{card.title}</h3>
-              <p style={{
-                color: 'var(--text)',
-                fontSize: 13,
-                lineHeight: 1.7,
-              }}>{card.desc}</p>
-            </div>
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                borderRadius: 20,
+                padding: '32px 24px',
+                transition: 'all .3s',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: 'rgba(167,139,250,0.1)',
+                  border: '1px solid rgba(167,139,250,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 20,
+                  fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+                  fontWeight: 700,
+                  marginBottom: 16,
+                }}>{card.icon}</div>
+                <h3 style={{
+                  fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  marginBottom: 8,
+                }}>{card.title}</h3>
+                <p style={{
+                  color: 'var(--text)',
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                }}>{card.desc}</p>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
       </section>
@@ -467,31 +496,33 @@ export default function Home() {
         margin: '0 auto',
         textAlign: 'center',
       }}>
-        <div style={{
-          display: 'inline-block',
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '1.5px',
-          textTransform: 'uppercase',
-          color: 'var(--primary)',
-          marginBottom: 12,
-        }}>How It Works</div>
-        <h2 style={{
-          fontFamily: 'Space Grotesk, sans-serif',
-          fontWeight: 800,
-          fontSize: 'clamp(28px, 4vw, 42px)',
-          lineHeight: 1.15,
-          marginBottom: 16,
-        }}>Three steps to start earning.</h2>
-        <p style={{
-          color: 'var(--text)',
-          fontSize: 15,
-          lineHeight: 1.7,
-          maxWidth: 560,
-          margin: '0 auto 40px',
-        }}>
-          Join the protocol, share your referral link, and earn commissions as your network grows.
-        </p>
+        <ScrollReveal>
+          <div style={{
+            display: 'inline-block',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+            color: 'var(--primary)',
+            marginBottom: 12,
+          }}>How It Works</div>
+          <h2 style={{
+            fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+            fontWeight: 800,
+            fontSize: 'clamp(28px, 4vw, 42px)',
+            lineHeight: 1.15,
+            marginBottom: 16,
+          }}>Three steps to start earning.</h2>
+          <p style={{
+            color: 'var(--text)',
+            fontSize: 15,
+            lineHeight: 1.7,
+            maxWidth: 560,
+            margin: '0 auto 40px',
+          }}>
+            Join the protocol, share your referral link, and earn commissions as your network grows.
+          </p>
+        </ScrollReveal>
 
         <div style={{
           display: 'grid',
@@ -500,7 +531,7 @@ export default function Home() {
           marginTop: 40,
           position: 'relative',
         }}>
-          {/* connecting line */}
+          {/* Connecting line */}
           <div style={{
             position: 'absolute',
             top: 40,
@@ -514,38 +545,40 @@ export default function Home() {
             { num: '2', title: 'Share Your Link', desc: 'Get your unique referral link and share it. Your downline is tracked automatically — no manual work.' },
             { num: '3', title: 'Earn Commissions', desc: 'Earn from three levels of referrals. L1, L2, L3 — all paid out on-chain, instantly, transparently.' },
           ].map((step) => (
-            <div key={step.num} style={{
-              textAlign: 'center',
-              padding: '32px 20px',
-            }}>
+            <ScrollReveal key={step.num}>
               <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                color: '#000',
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontWeight: 800,
-                fontSize: 18,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
-                position: 'relative',
-                zIndex: 1,
-              }}>{step.num}</div>
-              <h3 style={{
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontWeight: 700,
-                fontSize: 16,
-                marginBottom: 8,
-              }}>{step.title}</h3>
-              <p style={{
-                color: 'var(--text)',
-                fontSize: 13,
-                lineHeight: 1.7,
-              }}>{step.desc}</p>
-            </div>
+                textAlign: 'center',
+                padding: '32px 20px',
+              }}>
+                <div style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                  color: '#000',
+                  fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+                  fontWeight: 800,
+                  fontSize: 18,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                  position: 'relative',
+                  zIndex: 1,
+                }}>{step.num}</div>
+                <h3 style={{
+                  fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  marginBottom: 8,
+                }}>{step.title}</h3>
+                <p style={{
+                  color: 'var(--text)',
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                }}>{step.desc}</p>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
       </section>
@@ -559,65 +592,67 @@ export default function Home() {
         margin: '0 auto',
         textAlign: 'center',
       }}>
-        <div style={{
-          display: 'inline-block',
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '1.5px',
-          textTransform: 'uppercase',
-          color: 'var(--primary)',
-          marginBottom: 12,
-        }}>Tokenomics</div>
-        <h2 style={{
-          fontFamily: 'Space Grotesk, sans-serif',
-          fontWeight: 800,
-          fontSize: 'clamp(28px, 4vw, 42px)',
-          lineHeight: 1.15,
-          marginBottom: 16,
-        }}>One token, clear job.</h2>
-        <p style={{
-          color: 'var(--text)',
-          fontSize: 15,
-          lineHeight: 1.7,
-          maxWidth: 560,
-          margin: '0 auto 40px',
-        }}>
-          ONC powers the ONCHYRA protocol — value, utility, and rewards, all in one.
-        </p>
+        <ScrollReveal>
+          <div style={{
+            display: 'inline-block',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+            color: 'var(--primary)',
+            marginBottom: 12,
+          }}>Tokenomics</div>
+          <h2 style={{
+            fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+            fontWeight: 800,
+            fontSize: 'clamp(28px, 4vw, 42px)',
+            lineHeight: 1.15,
+            marginBottom: 16,
+          }}>One token, clear job.</h2>
+          <p style={{
+            color: 'var(--text)',
+            fontSize: 15,
+            lineHeight: 1.7,
+            maxWidth: 560,
+            margin: '0 auto 40px',
+          }}>
+            ONC powers the ONCHYRA protocol — value, utility, and rewards, all in one.
+          </p>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 16,
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
-          borderRadius: 20,
-          padding: 32,
-          marginTop: 40,
-        }}>
-          {[
-            { num: 'ONC', lbl: 'Core Token', color: 'var(--primary)' },
-            { num: 'ERC-20', lbl: 'Standard' },
-            { num: 'Polygon', lbl: 'Network' },
-            { num: 'Deflationary', lbl: 'Model', color: 'var(--accent)' },
-          ].map((item) => (
-            <div key={item.lbl} style={{ textAlign: 'center' }}>
-              <div style={{
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontWeight: 800,
-                fontSize: 28,
-                color: item.color ?? 'white',
-              }}>{item.num}</div>
-              <div style={{
-                fontSize: 11,
-                color: 'var(--text-dim)',
-                marginTop: 4,
-                textTransform: 'uppercase',
-                letterSpacing: '.5px',
-              }}>{item.lbl}</div>
-            </div>
-          ))}
-        </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 16,
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 20,
+            padding: 32,
+            marginTop: 40,
+          }}>
+            {[
+              { num: 'ONC', lbl: 'Core Token', color: 'var(--primary)' },
+              { num: 'ERC-20', lbl: 'Standard' },
+              { num: 'Polygon', lbl: 'Network' },
+              { num: 'Deflationary', lbl: 'Model', color: 'var(--accent)' },
+            ].map((item) => (
+              <div key={item.lbl} style={{ textAlign: 'center' }}>
+                <div style={{
+                  fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+                  fontWeight: 800,
+                  fontSize: 28,
+                  color: item.color ?? 'white',
+                }}>{item.num}</div>
+                <div style={{
+                  fontSize: 11,
+                  color: 'var(--text-dim)',
+                  marginTop: 4,
+                  textTransform: 'uppercase',
+                  letterSpacing: '.5px',
+                }}>{item.lbl}</div>
+              </div>
+            ))}
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* ─── CTA ─── */}
@@ -635,59 +670,63 @@ export default function Home() {
           height: 1,
           background: 'linear-gradient(90deg, transparent, rgba(167,139,250,0.2), transparent)',
         }} />
-        <h2 style={{
-          fontFamily: 'Space Grotesk, sans-serif',
-          fontWeight: 900,
-          fontSize: 'clamp(32px, 5vw, 52px)',
-          maxWidth: 600,
-          margin: '0 auto 16px',
-        }}>Ready to build<br />your network?</h2>
-        <p style={{
-          color: 'var(--text)',
-          fontSize: 15,
-          maxWidth: 440,
-          margin: '0 auto 32px',
-          lineHeight: 1.7,
-        }}>
-          Join ONCHYRA and start earning on-chain referral commissions today. No hidden fees, no gatekeepers.
-        </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/register" style={{
-            padding: '12px 28px',
-            borderRadius: 12,
-            fontWeight: 700,
-            fontSize: 13,
-            fontFamily: 'Inter, sans-serif',
-            cursor: 'pointer',
-            border: 'none',
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            color: '#000',
-            boxShadow: '0 4px 24px rgba(167,139,250,0.25)',
+        <ScrollReveal>
+          <h2 style={{
+            fontFamily: 'var(--font-space-grotesk), Space Grotesk, sans-serif',
+            fontWeight: 900,
+            fontSize: 'clamp(32px, 5vw, 52px)',
+            maxWidth: 600,
+            margin: '0 auto 16px',
+          }}>Ready to build<br />your network?</h2>
+          <p style={{
+            color: 'var(--text)',
+            fontSize: 15,
+            maxWidth: 440,
+            margin: '0 auto 32px',
+            lineHeight: 1.7,
           }}>
-            Get Started
-          </Link>
-          <Link href="/login" style={{
-            padding: '12px 28px',
-            borderRadius: 12,
-            fontWeight: 700,
-            fontSize: 13,
-            fontFamily: 'Inter, sans-serif',
-            cursor: 'pointer',
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'transparent',
-            color: 'white',
-            border: '1px solid var(--border)',
-          }}>
-            Sign In
-          </Link>
-        </div>
+            Join ONCHYRA and start earning on-chain referral commissions today. No hidden fees, no gatekeepers.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/register" style={{
+              padding: '12px 28px',
+              borderRadius: 12,
+              fontWeight: 700,
+              fontSize: 13,
+              fontFamily: 'Inter, sans-serif',
+              cursor: 'pointer',
+              border: 'none',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+              color: '#000',
+              boxShadow: '0 4px 24px rgba(167,139,250,0.25)',
+              transition: 'all .25s',
+            }}>
+              Get Started
+            </Link>
+            <Link href="/login" style={{
+              padding: '12px 28px',
+              borderRadius: 12,
+              fontWeight: 700,
+              fontSize: 13,
+              fontFamily: 'Inter, sans-serif',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'transparent',
+              color: 'white',
+              border: '1px solid var(--border)',
+              transition: 'all .25s',
+            }}>
+              Sign In
+            </Link>
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* ─── Footer ─── */}

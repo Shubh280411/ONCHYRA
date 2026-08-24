@@ -132,7 +132,6 @@ function RegisterContent() {
 
     setRegistering(true);
     try {
-      // Step 1 — Verify OTP
       const vRes = await fetch(`${apiUrl}/api/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,7 +141,6 @@ function RegisterContent() {
       if (!vRes.ok) throw new Error(vData.error || 'OTP verification failed');
       setOtpVerified(true);
 
-      // Step 2 — Check referral
       const refRes = await fetch(`${apiUrl}/api/check-referral/${data.refCode}`);
       if (!refRes.ok) {
         const e = await refRes.json();
@@ -155,13 +153,11 @@ function RegisterContent() {
         return;
       }
 
-      // Step 3 — Create Firebase user
       const auth = getClientAuth();
       const userCred = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const uid = userCred.user.uid;
       const myRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-      // Step 4 — Register commission
       const commRes = await fetch(`${apiUrl}/api/register-commission`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -190,122 +186,152 @@ function RegisterContent() {
   };
 
   const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '16px 18px',
+    borderRadius: 14,
     border: '1px solid rgba(255,255,255,0.08)',
     background: 'rgba(255,255,255,0.04)',
-    fontFamily: 'Inter',
+    color: 'white',
+    fontSize: 13,
+    fontFamily: "'Inter', sans-serif",
+    outline: 'none',
+    transition: '0.25s',
+  };
+
+  const inputFocusHandler = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = 'rgba(167,139,250,0.35)';
+    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+  };
+
+  const inputBlurHandler = (e: React.FocusEvent<HTMLInputElement>, refBorderColor?: string) => {
+    e.currentTarget.style.borderColor = refError && refBorderColor === 'referral'
+      ? 'rgba(239,68,68,0.4)'
+      : 'rgba(255,255,255,0.08)';
+    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
   };
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-5"
       style={{
+        fontFamily: "'Inter', sans-serif",
         background: '#03040a',
+        color: 'white',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
         backgroundImage: 'radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.08) 0%, transparent 60%)',
       }}
     >
-      <div className="w-full max-w-[420px] flex flex-col gap-4">
+      <div style={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div
-          className="text-center font-black text-[22px] tracking-[-0.5px]"
           style={{
-            fontFamily: 'Space Grotesk',
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontWeight: 900,
+            fontSize: 22,
             background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
+            textAlign: 'center',
+            letterSpacing: -0.5,
           }}
         >
-          <img src="/logo.png" alt="ONCHYRA" className="h-8 inline-block align-middle mr-1.5" />
+          <img src="/logo.png" alt="ONCHYRA" style={{ height: 32, verticalAlign: 'middle', marginRight: 6 }} />
           ONCHYRA
         </div>
         <div
-          className="text-center uppercase tracking-[3px] text-[10px]"
-          style={{ color: 'rgba(255,255,255,0.2)', marginTop: '2px' }}
+          style={{
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.2)',
+            textAlign: 'center',
+            textTransform: 'uppercase',
+            letterSpacing: 3,
+            marginTop: 2,
+          }}
         >
           Create Your Account
         </div>
 
         <div
-          className="rounded-3xl p-8"
           style={{
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 24,
+            padding: '32px 28px',
             backdropFilter: 'blur(20px)',
           }}
         >
-          <div className="text-center text-[15px] font-extrabold mb-1">Get Started</div>
+          <div style={{ fontSize: 15, fontWeight: 800, textAlign: 'center', marginBottom: 4 }}>Get Started</div>
           <div
-            className="text-center text-[10px] uppercase tracking-[1px] mb-5"
-            style={{ color: 'rgba(255,255,255,0.25)' }}
+            style={{
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.25)',
+              textAlign: 'center',
+              marginBottom: 20,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}
           >
             Join the mining revolution
           </div>
 
-          {/* Name */}
-          <div className="relative mt-3.5">
+          <div style={{ position: 'relative', marginTop: 14 }}>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Full Name"
               autoComplete="name"
-              className="w-full py-4 px-[18px] rounded-[14px] text-white text-[13px] outline-none transition-all duration-250"
               style={inputStyle}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(167,139,250,0.35)';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-              }}
+              onFocus={inputFocusHandler}
+              onBlur={(e) => inputBlurHandler(e)}
             />
           </div>
 
-          {/* Email */}
-          <div className="relative mt-3.5">
+          <div style={{ position: 'relative', marginTop: 14 }}>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email Address"
               autoComplete="email"
-              className="w-full py-4 px-[18px] rounded-[14px] text-white text-[13px] outline-none transition-all duration-250"
               style={inputStyle}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(167,139,250,0.35)';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-              }}
+              onFocus={inputFocusHandler}
+              onBlur={(e) => inputBlurHandler(e)}
             />
           </div>
 
-          {/* Password */}
-          <div className="relative mt-3.5">
+          <div style={{ position: 'relative', marginTop: 14 }}>
             <input
               type={showPass ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               autoComplete="new-password"
-              className="w-full py-4 px-[18px] rounded-[14px] text-white text-[13px] outline-none transition-all duration-250 pr-12"
-              style={inputStyle}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(167,139,250,0.35)';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-              }}
+              style={{ ...inputStyle, paddingRight: 48 }}
+              onFocus={inputFocusHandler}
+              onBlur={(e) => inputBlurHandler(e)}
             />
             <button
               type="button"
               onClick={() => setShowPass(!showPass)}
               tabIndex={-1}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 flex p-1 transition-colors duration-200"
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}
+              style={{
+                position: 'absolute',
+                right: 14,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255,255,255,0.3)',
+                cursor: 'pointer',
+                padding: 4,
+                display: 'flex',
+                transition: '0.2s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 {showPass ? (
@@ -320,51 +346,46 @@ function RegisterContent() {
             </button>
           </div>
 
-          {/* Referral */}
-          <div className="relative mt-3.5">
+          <div style={{ position: 'relative', marginTop: 14 }}>
             <input
               type="text"
               value={referral}
               onChange={(e) => setReferral(e.target.value)}
               placeholder="Referral Code *"
               autoComplete="off"
-              className="w-full py-4 px-[18px] rounded-[14px] text-white text-[13px] outline-none transition-all duration-250"
               style={{
                 ...inputStyle,
                 borderColor: refError ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)',
               }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(167,139,250,0.35)';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = refError ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)';
-                e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-              }}
+              onFocus={inputFocusHandler}
+              onBlur={(e) => inputBlurHandler(e, 'referral')}
             />
           </div>
 
-          {/* Ref badge */}
           <div
-            className="flex items-center gap-2 mt-3.5 py-3 px-4 rounded-xl"
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 14,
+              padding: '12px 16px',
+              borderRadius: 12,
               background: 'rgba(167,139,250,0.06)',
               border: '1px solid rgba(167,139,250,0.12)',
             }}
           >
-            <svg width="16" height="16" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24">
+            <svg width="16" height="16" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <span className="text-[11px] leading-[1.4]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>
               Referral code is <strong style={{ color: '#a78bfa' }}>required</strong> — you must have an inviter to join
             </span>
           </div>
 
-          {/* OTP Row */}
           {otpSent && (
-            <div className="flex gap-2 mt-3.5 animate-fade-in">
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
               <input
                 type="text"
                 value={otp}
@@ -373,11 +394,20 @@ function RegisterContent() {
                 maxLength={6}
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                className="flex-1 py-4 px-[18px] rounded-[14px] text-white text-[20px] font-black outline-none transition-all duration-250 text-center tracking-[6px]"
                 style={{
+                  flex: 1,
+                  padding: '16px 18px',
+                  borderRadius: 14,
                   border: '1px solid rgba(255,255,255,0.08)',
                   background: 'rgba(255,255,255,0.04)',
-                  fontFamily: 'Space Grotesk',
+                  color: 'white',
+                  fontSize: 20,
+                  fontWeight: 900,
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  outline: 'none',
+                  transition: '0.25s',
+                  textAlign: 'center',
+                  letterSpacing: 6,
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = 'rgba(167,139,250,0.35)';
@@ -389,13 +419,11 @@ function RegisterContent() {
             </div>
           )}
 
-          {/* Help text */}
           {otpSent && (
-            <div className="mt-1.5 text-center text-[10px] animate-fade-in" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            <div style={{ marginTop: 6, fontSize: 10, color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>
               Can&apos;t find the email?{' '}
               <span
-                className="font-semibold cursor-pointer"
-                style={{ color: '#a78bfa' }}
+                style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600, cursor: 'pointer' }}
                 onClick={() => setShowAlert(true)}
               >
                 Check Spam/Junk folder
@@ -404,17 +432,20 @@ function RegisterContent() {
             </div>
           )}
 
-          {/* Notice box */}
           {otpSent && (
             <div
-              className="mt-3.5 p-4 rounded-[14px] text-[11px] leading-[1.7] animate-fade-in"
               style={{
+                marginTop: 14,
+                padding: 16,
+                borderRadius: 14,
                 background: 'rgba(167,139,250,0.06)',
                 border: '1px solid rgba(167,139,250,0.12)',
+                fontSize: 11,
                 color: 'rgba(255,255,255,0.6)',
+                lineHeight: 1.7,
               }}
             >
-              <div className="font-extrabold text-[12px] mb-1.5" style={{ color: '#a78bfa' }}>
+              <div style={{ fontWeight: 800, fontSize: 12, color: '#a78bfa', marginBottom: 6 }}>
                 OTP not received?
               </div>
               Please check your <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Spam/Junk folder</strong>. Some email providers may place verification emails there.
@@ -423,23 +454,26 @@ function RegisterContent() {
             </div>
           )}
 
-          {/* Resend area */}
           {otpSent && (
-            <div className="mt-2.5 text-center min-h-[20px]">
+            <div style={{ marginTop: 10, textAlign: 'center', minHeight: 20 }}>
               {resendTimer > 0 ? (
-                <span className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
                   Resend OTP in {resendTimer}s
                 </span>
               ) : (
                 <button
                   onClick={handleResendOtp}
-                  className="font-bold text-[12px] py-1.5 px-3 rounded-lg transition-all duration-200"
                   style={{
                     background: 'none',
                     border: 'none',
                     color: '#a78bfa',
+                    fontWeight: 700,
+                    fontSize: 12,
                     cursor: 'pointer',
-                    fontFamily: 'Inter',
+                    fontFamily: "'Inter', sans-serif",
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    transition: '0.2s',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(167,139,250,0.1)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
@@ -450,38 +484,76 @@ function RegisterContent() {
             </div>
           )}
 
-          {/* Register button */}
           {otpSent && (
             <button
               onClick={handleRegister}
               disabled={registering}
-              className="w-full mt-4 py-4 rounded-[14px] text-black font-black text-[13px] transition-all duration-250 animate-fade-in"
               style={{
-                background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
+                width: '100%',
+                marginTop: 16,
+                padding: 16,
                 border: 'none',
+                borderRadius: 14,
+                background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
+                color: '#000',
+                fontWeight: 900,
+                fontSize: 13,
                 cursor: registering ? 'not-allowed' : 'pointer',
-                opacity: registering ? 0.5 : 1,
-                fontFamily: 'Inter',
+                fontFamily: "'Inter', sans-serif",
+                transition: '0.25s',
                 letterSpacing: '0.3px',
+                opacity: registering ? 0.5 : 1,
+                transform: 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (!registering) {
+                  e.currentTarget.style.opacity = '0.9';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!registering) {
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.transform = 'none';
+                }
               }}
             >
               {registering ? 'Verifying...' : 'Create Account'}
             </button>
           )}
 
-          {/* Send OTP button */}
           {!otpSent && (
             <button
               onClick={handleSendOtp}
               disabled={sendingOtp}
-              className="w-full mt-4 py-4 rounded-[14px] text-black font-black text-[13px] transition-all duration-250"
               style={{
-                background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
+                width: '100%',
+                marginTop: 16,
+                padding: 16,
                 border: 'none',
+                borderRadius: 14,
+                background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
+                color: '#000',
+                fontWeight: 900,
+                fontSize: 13,
                 cursor: sendingOtp ? 'not-allowed' : 'pointer',
-                opacity: sendingOtp ? 0.5 : 1,
-                fontFamily: 'Inter',
+                fontFamily: "'Inter', sans-serif",
+                transition: '0.25s',
                 letterSpacing: '0.3px',
+                opacity: sendingOtp ? 0.5 : 1,
+                transform: 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (!sendingOtp) {
+                  e.currentTarget.style.opacity = '0.9';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!sendingOtp) {
+                  e.currentTarget.style.opacity = '1';
+                  e.currentTarget.style.transform = 'none';
+                }
               }}
             >
               {sendingOtp ? 'Sending...' : 'Send OTP'}
@@ -491,34 +563,51 @@ function RegisterContent() {
 
         <Link
           href="/login"
-          className="block mt-1.5 text-center text-xs no-underline transition-colors duration-200"
-          style={{ color: 'rgba(255,255,255,0.25)' }}
+          style={{
+            display: 'block',
+            marginTop: 6,
+            textAlign: 'center',
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.25)',
+            textDecoration: 'none',
+            transition: '0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#a78bfa'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.25)'; }}
         >
           Already have an account? <span style={{ color: '#a78bfa', fontWeight: 700 }}>Login</span>
         </Link>
       </div>
 
-      {/* Alert overlay */}
       {showAlert && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-6 animate-fade-in"
-          style={{ background: 'rgba(0,0,0,0.7)' }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+          }}
           onClick={() => setShowAlert(false)}
         >
           <div
-            className="max-w-[360px] w-full text-center rounded-3xl p-8"
             style={{
               background: '#0b0b20',
               border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 24,
+              padding: '32px 24px',
+              maxWidth: 360,
+              width: '100%',
+              textAlign: 'center',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-[36px] mb-2.5">⚠️</div>
-            <div className="font-extrabold text-[15px] mb-2">Check Your Spam Folder</div>
-            <div
-              className="text-xs leading-[1.7] mb-[18px]"
-              style={{ color: 'rgba(255,255,255,0.5)' }}
-            >
+            <div style={{ fontSize: 36, marginBottom: 10 }}>⚠️</div>
+            <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 8 }}>Check Your Spam Folder</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, marginBottom: 18 }}>
               Your verification email may appear in the{' '}
               <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Spam/Junk folder</strong>.
               <br /><br />
@@ -527,13 +616,20 @@ function RegisterContent() {
             </div>
             <button
               onClick={() => setShowAlert(false)}
-              className="w-full py-3 px-6 rounded-xl font-extrabold text-[13px]"
               style={{
-                background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
+                padding: '12px 24px',
                 border: 'none',
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
+                color: '#000',
+                fontWeight: 800,
+                fontSize: 13,
                 cursor: 'pointer',
-                fontFamily: 'Inter',
+                fontFamily: "'Inter', sans-serif",
+                width: '100%',
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
             >
               Got it
             </button>

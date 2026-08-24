@@ -56,7 +56,7 @@ export default function WithdrawPage() {
         setBalance(data.commissionBalance || data.balance || 0);
         setUserEmail(data.email || '');
       }
-    } catch { /* silent */ }
+    } catch {}
   }
 
   async function fetchHistory() {
@@ -66,9 +66,7 @@ export default function WithdrawPage() {
       if (res.ok) {
         setHistory(await res.json());
       }
-    } catch {
-      // silent
-    }
+    } catch {}
     setLoading(false);
   }
 
@@ -89,23 +87,6 @@ export default function WithdrawPage() {
       showToast(e instanceof Error ? e.message : 'Failed to send OTP', 'error');
     }
     setSendingOtp(false);
-  }
-
-  async function verifyOtp() {
-    if (!userEmail || otp.length !== 6) return;
-    try {
-      const res = await fetch(`${apiUrl}/api/otp/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail, otp }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Invalid OTP');
-      setOtpVerified(true);
-      showToast('OTP verified');
-    } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : 'Invalid OTP', 'error');
-    }
   }
 
   async function submitWithdraw() {
@@ -137,203 +118,192 @@ export default function WithdrawPage() {
     setSubmitting(false);
   }
 
-  function statusColor(s: string) {
-    if (s === 'completed') return 'text-green-400 bg-green-500/10 border-green-500/20';
-    if (s === 'pending') return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
-    if (s === 'processing') return 'text-[var(--primary)] bg-purple-500/10 border-purple-500/20';
-    return 'text-red-400 bg-red-500/10 border-red-500/20';
+  function statusStyle(s: string): React.CSSProperties {
+    if (s === 'completed') return { color: '#22c55e', background: 'rgba(34,197,94,0.08)' };
+    if (s === 'pending') return { color: '#f59e0b', background: 'rgba(245,158,11,0.08)' };
+    if (s === 'processing') return { color: '#a78bfa', background: 'rgba(167,139,250,0.08)' };
+    return { color: '#ef4444', background: 'rgba(239,68,68,0.08)' };
   }
 
+  const SG = "'Space Grotesk',sans-serif";
+  const INTER = "'Inter',sans-serif";
+
   return (
-    <div className="min-h-screen px-4 py-5 max-w-md mx-auto flex flex-col gap-3.5">
+    <div style={{ fontFamily: INTER, background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
       {ToastComponent}
 
-      {/* Header */}
-      <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl px-4 py-3.5">
-        <Link
-          href="/dashboard"
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.06] text-white shrink-0"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-        </Link>
-        <span className="font-[family-name:var(--font-space-grotesk)] font-black text-lg bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent flex-1">
-          ONCHYRA
-        </span>
-        <span className="text-[11px] font-bold bg-purple-500/10 border border-purple-500/15 px-3.5 py-1.5 rounded-full whitespace-nowrap">
-          Commission <span className="font-[family-name:var(--font-space-grotesk)] text-[var(--primary)]">{formatUSD(balance)}</span>
-        </span>
-      </div>
+      <style>{`
+        @keyframes slideUp { from{transform:translateX(-50%) translateY(20px);opacity:0} }
+        @keyframes blink-warn { 0%,100%{opacity:1;border-color:rgba(239,68,68,0.2)} 50%{opacity:0.6;border-color:rgba(239,68,68,0.5)} }
+        @keyframes loaderAnim { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
+      `}</style>
 
-      {/* Title */}
-      <h1 className="font-[family-name:var(--font-space-grotesk)] font-extrabold text-xl">Withdraw</h1>
-      <p className="text-white/40 text-xs -mt-2">BEP20 &mdash; Min $10 | 5% fee</p>
+      {/* phone-frame */}
+      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {/* Summary */}
-      <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl px-3 py-4">
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div>
-            <div className="font-[family-name:var(--font-space-grotesk)] font-black text-sm">{formatUSD(balance)}</div>
-            <div className="text-[8px] text-white/25 uppercase tracking-wider mt-1">Commission</div>
-          </div>
-          <div>
-            <div className="font-[family-name:var(--font-space-grotesk)] font-black text-sm text-green-400">{formatUSD(totalWithdrawn)}</div>
-            <div className="text-[8px] text-white/25 uppercase tracking-wider mt-1">Withdrawn</div>
-          </div>
-          <div>
-            <div className="font-[family-name:var(--font-space-grotesk)] font-black text-sm text-yellow-400">{formatUSD(pendingTotal)}</div>
-            <div className="text-[8px] text-white/25 uppercase tracking-wider mt-1">Pending</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Form */}
-      <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-5">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-white/25 mb-4">Withdrawal Request</div>
-
-        {/* Network badge */}
-        <div className="flex items-center gap-2 px-3.5 py-2.5 bg-purple-500/[0.06] border border-purple-500/[0.12] rounded-xl mb-4 text-xs">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#26a17b"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>
-          <span className="text-white/40">Network: <strong className="text-[var(--primary)]">BEP20</strong> &bull; Asset: <strong className="text-[var(--primary)]">USDT</strong></span>
+        {/* header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 22, padding: '14px 16px' }}>
+          <Link href="/dashboard" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, cursor: 'pointer', color: 'white', textDecoration: 'none', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          </Link>
+          <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flex: 1 }}>ONCHYRA</div>
+          <div style={{ fontSize: 11, fontWeight: 700, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.15)', padding: '6px 14px', borderRadius: 100, whiteSpace: 'nowrap' as const }}>Commission <span style={{ fontFamily: SG, color: '#a78bfa' }}>{formatUSD(balance)}</span></div>
         </div>
 
-        {/* Warning */}
-        <div className="flex items-start gap-2.5 px-3.5 py-3 mb-4 bg-red-500/[0.08] border border-red-500/20 rounded-xl text-[11px] leading-relaxed text-white/60 animate-pulse-slow">
-          <svg className="shrink-0 mt-0.5 text-red-500" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-          <span><strong className="text-red-400">Verify your wallet address carefully.</strong> Funds sent to a wrong address cannot be recovered.</span>
-        </div>
+        {/* page title */}
+        <div style={{ fontFamily: SG, fontWeight: 800, fontSize: 22, margin: '4px 0 2px' }}>Withdraw</div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>BEP20 — Min $10 | 5% fee</div>
 
-        {/* Wallet */}
-        <div className="mb-3.5">
-          <label className="block text-[9px] font-bold uppercase tracking-wider text-white/30 mb-1.5">Wallet Address</label>
-          <input
-            type="text"
-            value={wallet}
-            onChange={(e) => setWallet(e.target.value)}
-            placeholder="0x..."
-            className="w-full px-4 py-3.5 rounded-xl border border-white/[0.08] bg-white/[0.04] text-white text-sm outline-none transition-all focus:border-[var(--primary)]/35 focus:bg-white/[0.06] placeholder:text-white/20"
-          />
-        </div>
-
-        {/* Amount */}
-        <div className="mb-3.5">
-          <label className="block text-[9px] font-bold uppercase tracking-wider text-white/30 mb-1.5">Amount (USDT)</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="10"
-            min="10"
-            step="0.01"
-            className="w-full px-4 py-3.5 rounded-xl border border-white/[0.08] bg-white/[0.04] text-white text-sm outline-none transition-all focus:border-[var(--primary)]/35 focus:bg-white/[0.06] placeholder:text-white/20"
-          />
-        </div>
-
-        {/* Fee calc */}
-        <div className="flex justify-between py-2.5 border-b border-white/[0.03] text-xs">
-          <span className="text-white/35">Amount</span>
-          <span className="font-bold font-[family-name:var(--font-space-grotesk)]">{formatUSD(amountNum)}</span>
-        </div>
-        <div className="flex justify-between py-2.5 border-b border-white/[0.03] text-xs">
-          <span className="text-white/35">Fee (5%)</span>
-          <span className="font-bold font-[family-name:var(--font-space-grotesk)] text-red-400">{formatUSD(fee)}</span>
-        </div>
-        <div className="flex justify-between py-2.5 text-xs">
-          <span className="text-white/35">You Receive</span>
-          <span className="font-bold font-[family-name:var(--font-space-grotesk)] text-green-400">{formatUSD(receive)}</span>
-        </div>
-
-        {/* OTP section */}
-        {!otpSent ? (
-          <button
-            onClick={sendOtp}
-            disabled={!canSendOtp || sendingOtp}
-            className="w-full mt-3 py-4 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-black font-[family-name:var(--font-space-grotesk)] font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {sendingOtp ? 'Sending...' : 'Send OTP'}
-          </button>
-        ) : (
-          <div className="mt-3">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                maxLength={6}
-                inputMode="numeric"
-                className="flex-1 px-4 py-3.5 rounded-xl border border-white/[0.08] bg-white/[0.04] text-white text-xl font-[family-name:var(--font-space-grotesk)] font-black text-center tracking-[6px] outline-none transition-all focus:border-[var(--primary)]/35 placeholder:text-xs placeholder:tracking-normal placeholder:font-medium placeholder:text-white/20"
-              />
-              {!otpVerified && (
-                <button
-                  onClick={verifyOtp}
-                  disabled={otp.length !== 6}
-                  className="px-5 py-3.5 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-black font-[family-name:var(--font-space-grotesk)] font-black text-xs whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Verify
-                </button>
-              )}
+        {/* summary card */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, padding: '16px 12px', backdropFilter: 'blur(20px)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            <div style={{ textAlign: 'center', padding: 8 }}>
+              <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 15, color: '#fff' }}>{formatUSD(balance)}</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' as const, letterSpacing: 0.5, marginTop: 4 }}>Commission</div>
             </div>
-            {otpVerified && (
-              <div className="mt-2 text-xs text-green-400 text-center font-bold">OTP Verified</div>
-            )}
+            <div style={{ textAlign: 'center', padding: 8 }}>
+              <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 15, color: '#22c55e' }}>{formatUSD(totalWithdrawn)}</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' as const, letterSpacing: 0.5, marginTop: 4 }}>Withdrawn</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: 8 }}>
+              <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 15, color: '#f59e0b' }}>{formatUSD(pendingTotal)}</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' as const, letterSpacing: 0.5, marginTop: 4 }}>Pending</div>
+            </div>
           </div>
-        )}
-
-        {/* Submit */}
-        {otpVerified && (
-          <button
-            onClick={submitWithdraw}
-            disabled={submitting}
-            className="w-full mt-3 py-4 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-black font-[family-name:var(--font-space-grotesk)] font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {submitting ? 'Processing...' : 'Withdraw'}
-          </button>
-        )}
-
-        {/* Rules */}
-        <div className="text-[11px] text-white/30 leading-relaxed p-3.5 bg-white/[0.02] rounded-xl mt-3">
-          <strong className="text-white/50">Rules:</strong> Min $10 &bull; 5% fee deducted ($10&ndash;$50 auto-send, &gt;$50 needs admin approval)<br />
-          Insufficient balance or invalid address will be rejected.
-        </div>
-      </div>
-
-      {/* History */}
-      <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl overflow-hidden">
-        <div className="flex justify-between items-center px-5 pt-4 pb-0">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-white/25">Withdrawal History</div>
-          <div className="text-[10px] text-white/15">{history.length}</div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-8 gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse" />
-            <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse [animation-delay:0.2s]" />
-            <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse [animation-delay:0.4s]" />
+        {/* form card */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, padding: '24px 20px', backdropFilter: 'blur(20px)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 1, color: 'rgba(255,255,255,0.25)', marginBottom: 16 }}>Withdrawal Request</div>
+
+          {/* network badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.12)', borderRadius: 12, marginBottom: 14, fontSize: 12 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#26a17b"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Network: <strong style={{ color: '#a78bfa' }}>BEP20</strong> • Asset: <strong style={{ color: '#a78bfa' }}>USDT</strong></span>
           </div>
-        ) : history.length === 0 ? (
-          <div className="py-8 text-center text-xs text-white/15">No withdrawals yet</div>
-        ) : (
-          history.map((w) => (
-            <div key={w.id} className="grid grid-cols-[70px_1fr_80px] gap-2 px-5 py-3.5 border-b border-white/[0.03] items-center last:border-b-0">
-              <div className="font-[family-name:var(--font-space-grotesk)] font-black text-sm">{formatUSD(Number(w.amount) || 0)}</div>
-              <div className="text-[10px] text-white/25 leading-snug">
-                Fee: {formatUSD(Number(w.fee) || 0)} &bull; Net: {formatUSD((Number(w.amount) || 0) - (Number(w.fee) || 0))}<br />
-                {new Date(w.createdAt).toLocaleDateString()}
-                {w.txHash && (
-                  <>
-                    <br />
-                    <a href={`https://bscscan.com/tx/${w.txHash}`} target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] no-underline text-[10px]">
-                      TX: {w.txHash.slice(0, 8)}...
-                    </a>
-                  </>
+
+          {/* warning card */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', marginTop: 12, marginBottom: 12, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, fontSize: 11, lineHeight: 1.5, color: 'rgba(255,255,255,0.6)', animation: 'blink-warn 2s ease-in-out infinite' }}>
+            <svg style={{ flexShrink: 0, marginTop: 1, color: '#ef4444' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span><strong style={{ color: '#ef4444' }}>⚠ Verify your wallet address carefully.</strong> Funds sent to a wrong address <u>cannot be recovered</u>. Double-check before submitting.</span>
+          </div>
+
+          {/* wallet address */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 1, color: 'rgba(255,255,255,0.3)', marginBottom: 5 }}>Wallet Address</label>
+            <input type="text" value={wallet} onChange={e => setWallet(e.target.value)} placeholder="0x..." style={{ width: '100%', padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, color: 'white', fontSize: 14, fontFamily: INTER, outline: 'none', transition: '0.2s' }} />
+          </div>
+
+          {/* amount */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 1, color: 'rgba(255,255,255,0.3)', marginBottom: 5 }}>Amount (USDT)</label>
+            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="10" min="10" step="0.01" style={{ width: '100%', padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, color: 'white', fontSize: 14, fontFamily: INTER, outline: 'none', transition: '0.2s' }} />
+          </div>
+
+          {/* fee calc */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+            <span style={{ color: 'rgba(255,255,255,0.35)' }}>Amount</span>
+            <span style={{ fontWeight: 700, fontFamily: SG }}>{formatUSD(amountNum)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+            <span style={{ color: 'rgba(255,255,255,0.35)' }}>Fee (5%)</span>
+            <span style={{ fontWeight: 700, fontFamily: SG, color: '#ef4444' }}>{formatUSD(fee)}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: 'none', fontSize: 12 }}>
+            <span style={{ color: 'rgba(255,255,255,0.35)' }}>You Receive</span>
+            <span style={{ fontWeight: 700, fontFamily: SG, color: '#22c55e' }}>{formatUSD(receive)}</span>
+          </div>
+
+          {/* send OTP */}
+          {!otpSent ? (
+            <button onClick={sendOtp} disabled={!canSendOtp || sendingOtp} style={{ width: '100%', marginTop: 12, padding: 16, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontWeight: 900, fontSize: 13, cursor: 'pointer', fontFamily: INTER, transition: '0.25s', opacity: (!canSendOtp || sendingOtp) ? 0.5 : 1 }}>
+              {sendingOtp ? 'Sending...' : 'Send OTP'}
+            </button>
+          ) : (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input type="text" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" maxLength={6} inputMode="numeric" autoComplete="one-time-code" style={{ flex: 1, padding: '14px 16px', borderRadius: 14, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'white', fontSize: 20, fontWeight: 900, fontFamily: SG, textAlign: 'center', letterSpacing: 6, outline: 'none', transition: '0.2s' }} />
+                {!otpVerified && (
+                  <button onClick={async () => {
+                    if (!userEmail || otp.length !== 6) return;
+                    try {
+                      const res = await fetch(`${apiUrl}/api/otp/verify`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: userEmail, otp }),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.error || 'Invalid OTP');
+                      setOtpVerified(true);
+                      showToast('OTP verified');
+                    } catch (e: unknown) {
+                      showToast(e instanceof Error ? e.message : 'Invalid OTP', 'error');
+                    }
+                  }} disabled={otp.length !== 6} style={{ padding: '10px 18px', border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontWeight: 900, fontSize: 11, cursor: 'pointer', fontFamily: INTER, transition: '0.25s', whiteSpace: 'nowrap' as const, opacity: otp.length !== 6 ? 0.5 : 1 }}>
+                    Verify
+                  </button>
                 )}
               </div>
-              <div className={`text-right text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full border ${statusColor(w.status)} justify-self-end`}>
-                {w.status}
-              </div>
+              {otpVerified && (
+                <div style={{ marginTop: 8, fontSize: 12, color: '#22c55e', textAlign: 'center', fontWeight: 700 }}>OTP Verified ✓</div>
+              )}
             </div>
-          ))
-        )}
+          )}
+
+          {/* withdraw button */}
+          {otpVerified && (
+            <button onClick={submitWithdraw} disabled={submitting} style={{ width: '100%', marginTop: 12, padding: 16, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontWeight: 900, fontSize: 13, cursor: 'pointer', fontFamily: INTER, transition: '0.25s', opacity: submitting ? 0.5 : 1 }}>
+              {submitting ? 'Processing...' : 'Withdraw'}
+            </button>
+          )}
+
+          {/* rules */}
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6, padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: 12, marginTop: 12 }}>
+            <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Rules:</strong> Min $10 • 5% fee deducted ($10–$50 auto-send, &gt;$50 needs admin approval)<br />
+            Insufficient balance or invalid address will be rejected.
+          </div>
+        </div>
+
+        {/* history card */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 20px 0' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 1, color: 'rgba(255,255,255,0.25)' }}>Withdrawal History</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)' }}>{history.length}</div>
+          </div>
+
+          {loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 32, gap: 6 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#a78bfa', animation: 'loaderAnim 1s ease-in-out infinite' }} />
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#a78bfa', animation: 'loaderAnim 1s ease-in-out infinite 0.2s' }} />
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#a78bfa', animation: 'loaderAnim 1s ease-in-out infinite 0.4s' }} />
+            </div>
+          ) : history.length === 0 ? (
+            <div style={{ padding: 32, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>No withdrawals yet</div>
+          ) : (
+            history.map((w) => {
+              const netAmount = (Number(w.amount) || 0) - (Number(w.fee) || 0);
+              const date = new Date(w.createdAt).toLocaleDateString();
+              const ss = statusStyle(w.status);
+              return (
+                <div key={w.id} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 80px', gap: 8, padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.03)', alignItems: 'center' }}>
+                  <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 14 }}>{formatUSD(Number(w.amount) || 0)}</div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.3 }}>
+                    Fee: {formatUSD(Number(w.fee) || 0)} • Net: {formatUSD(netAmount)}<br />
+                    {date}
+                    {w.txHash && (
+                      <>
+                        <br />
+                        <a href={`https://bscscan.com/tx/${w.txHash}`} target="_blank" rel="noopener noreferrer" style={{ color: '#a78bfa', textDecoration: 'none', fontSize: 10 }}>TX: {w.txHash.slice(0, 8)}...</a>
+                      </>
+                    )}
+                  </div>
+                  <div style={{ textAlign: 'right', fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, padding: '4px 10px', borderRadius: 100, display: 'inline-block', justifySelf: 'end', ...ss }}>{w.status}</div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
       </div>
     </div>
   );
