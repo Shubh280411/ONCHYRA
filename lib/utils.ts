@@ -57,9 +57,7 @@ export function detectApiUrl(): string {
   if (typeof window === 'undefined') return '';
   const stored = localStorage.getItem('onc_api');
   if (stored) return stored;
-  const host = window.location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:5000';
-  return 'https://onchyra-api.onrender.com';
+  return '';
 }
 
 export function getUid(): string | null {
