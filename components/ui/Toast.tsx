@@ -19,11 +19,31 @@ export default function Toast({ message, type, onClose }: ToastProps) {
     return () => clearTimeout(timer);
   }, [onClose]);
 
+  const bgColor = type === 'success' ? '#22c55e' : '#ef4444';
+  const textColor = type === 'success' ? '#000' : '#fff';
+
   return (
     <div
-      className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[3000] px-6 py-3.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
-      } ${type === 'success' ? 'bg-[var(--green)] text-black' : 'bg-[var(--red)] text-white'}`}
+      style={{
+        position: 'fixed',
+        bottom: 32,
+        left: '50%',
+        transform: visible ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(20px)',
+        zIndex: 3000,
+        padding: '14px 28px',
+        borderRadius: 14,
+        fontWeight: 800,
+        fontSize: 13,
+        whiteSpace: 'nowrap',
+        background: bgColor,
+        color: textColor,
+        opacity: visible ? 1 : 0,
+        transition: 'all 0.3s ease',
+        boxShadow: `0 8px 32px ${bgColor}33`,
+        border: `1px solid ${bgColor}55`,
+        fontFamily: "'Space Grotesk',sans-serif",
+        letterSpacing: 0.5,
+      }}
     >
       {message}
     </div>
