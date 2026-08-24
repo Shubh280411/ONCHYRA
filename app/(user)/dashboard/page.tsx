@@ -71,7 +71,7 @@ export default function DashboardPage() {
       try {
         const [uRes, lbRes, nRes] = await Promise.all([
           fetch(`${apiUrl}/api/user/${uid}`).then(r => r.json()),
-          fetch(`${apiUrl}/api/leaderboard?limit=5`).then(r => r.json()),
+          fetch(`${apiUrl}/api/leaderboard?limit=3`).then(r => r.json()),
           fetch(`${apiUrl}/api/notifications/${uid}`).then(r => r.json()),
         ]);
         setUserData(uRes);
@@ -212,17 +212,19 @@ export default function DashboardPage() {
         </div>
         {[
           { href: '/dashboard', label: 'Dashboard', active: true, icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+          { href: '/p2p-transfer', label: 'P2P Transfer', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> },
+          { href: '/referrals', label: 'Referrals', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+          { href: '/packages', label: 'Packages', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> },
+          { href: '/income', label: 'Income', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
+          { href: '/income', label: 'Leadership', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 8 5 9 7v2"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 16 5 15 7v2"/><path d="M4 22h16"/><path d="M10 22V8h4v14"/></svg> },
           { href: '/deposit', label: 'Deposit', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3h-8l-2 4h12z"/></svg> },
           { href: '/withdraw', label: 'Withdraw', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> },
-          { href: '/packages', label: 'Packages', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> },
-          { href: '/referrals', label: 'Referrals', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
-          { href: '/income', label: 'Income', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
+          { href: '/contests', label: 'Contest', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> },
           { href: '/leaderboard', label: 'Leaderboard', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg> },
-          { href: '/contests', label: 'Contests', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> },
-          { href: '/p2p-transfer', label: 'P2P Transfer', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> },
-          { href: '/profile', label: 'Profile', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+          { href: '/updates', label: 'Updates', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> },
+          { href: '#tools', label: 'Tools', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> },
         ].map(item => (
-          <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} style={{ color: item.active ? '#a78bfa' : 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: 13, fontWeight: 600, padding: 14, borderRadius: 14, marginBottom: 5, display: 'flex', alignItems: 'center', gap: 12, background: item.active ? 'rgba(167,139,250,0.1)' : 'none' }}>
+          <Link key={item.label} href={item.href} onClick={(e) => { if (item.href === '#tools') { e.preventDefault(); showToast('Coming soon!'); } setMenuOpen(false); }} style={{ color: item.active ? '#a78bfa' : 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: 13, fontWeight: 600, padding: 14, borderRadius: 14, marginBottom: 5, display: 'flex', alignItems: 'center', gap: 12, background: item.active ? 'rgba(167,139,250,0.1)' : 'none', cursor: 'pointer' }}>
             {item.icon}
             <span>{item.label}</span>
           </Link>
@@ -358,6 +360,31 @@ export default function DashboardPage() {
           {leaderboard.length === 0 && <div style={{ padding: 12, textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>No data yet</div>}
         </Card>
 
+        {/* LIVE ACTIVITY */}
+        <Card className="full-width" style={{ marginTop: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 15 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span style={{ fontSize: 12, fontWeight: 800 }}>LIVE ACTIVITY</span>
+          </div>
+          {leaderboard.length > 0 ? leaderboard.slice(0, 5).map((l, i) => (
+            <div key={l.uid + i} style={{ display: 'flex', justifyContent: 'space-between', padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 14, marginBottom: 8, fontSize: 11, border: '1px solid rgba(255,255,255,0.03)', alignItems: 'center' }}>
+              <span><b style={{ color: '#fff' }}>{l.name || 'Anonymous'}</b> <span style={{ opacity: 0.5, fontSize: 10 }}>synchronized</span></span>
+              <span style={{ opacity: 0.5, fontSize: 10 }}>now</span>
+            </div>
+          )) : <div style={{ padding: 12, textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>No activity yet</div>}
+        </Card>
+
+        {/* PROTOCOL UPDATE */}
+        <Link href="/updates" style={{ display: 'block', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderLeft: '4px solid #a78bfa', borderRadius: 28, padding: 25, marginTop: 18, textDecoration: 'none', color: 'white', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style={{ fontSize: 9, fontWeight: 800, color: '#a78bfa', letterSpacing: 2 }}>PROTOCOL UPDATE</div>
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, marginTop: 6 }}>
+            {notifications.length > 0 ? notifications[0].title : 'No updates yet'}
+          </div>
+        </Link>
+
         {/* REFERRAL CODE */}
         <Card className="full-width" style={{ background: 'linear-gradient(135deg,rgba(167,139,250,0.08),rgba(96,165,250,0.06))', border: '1px solid rgba(167,139,250,0.25)', marginTop: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
@@ -406,6 +433,30 @@ export default function DashboardPage() {
               </div>
             </div>
           ))}
+        </Card>
+
+        {/* QUICK P2P SEND */}
+        <Card className="full-width" style={{ marginTop: 18, border: '1px solid rgba(167,139,250,0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+            <h3 style={{ fontSize: 12, fontFamily: SG, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+              Quick Send
+            </h3>
+            <Link href="/p2p-transfer" style={{ fontSize: 9, color: '#a78bfa', fontWeight: 700, textDecoration: 'none', letterSpacing: 0.5 }}>FULL VIEW</Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 8, fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.35)', marginBottom: 6 }}>Network ID</div>
+              <input type="text" placeholder="Referral code" maxLength={12} style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '12px 14px', fontFamily: INTER, fontSize: 13, color: 'white', outline: 'none' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 8, fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.35)', marginBottom: 6 }}>Amount</div>
+              <input type="text" inputMode="decimal" placeholder="ONC" style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '12px 14px', fontFamily: INTER, fontSize: 13, color: 'white', outline: 'none' }} />
+            </div>
+          </div>
+          <button style={{ width: '100%', padding: 14, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontFamily: SG, fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' as const, cursor: 'pointer' }}>
+            Send ONC
+          </button>
         </Card>
 
         {/* QUICK LINKS */}
