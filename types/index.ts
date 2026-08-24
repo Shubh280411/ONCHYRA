@@ -171,6 +171,7 @@ export interface TeamMember {
   name: string;
   email: string;
   referralCode: string;
+  referredBy: string;
   activePackage: string;
   packageStatus: string;
   totalPackageSpend: number;

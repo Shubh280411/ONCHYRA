@@ -43,6 +43,7 @@ export async function GET(
         name: u.name,
         email: u.email,
         referralCode: u.referral_code,
+        referredBy: u.referred_by,
         activePackage: u.active_package,
         packageStatus: u.package_status,
         totalPackageSpend: Number(u.total_package_spend) || 0,
