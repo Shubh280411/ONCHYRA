@@ -4,18 +4,19 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
-import type React from 'react';
 import { detectApiUrl, formatUSD } from '@/lib/utils';
+import { PACKAGES } from '@/types';
+import type React from 'react';
 
-const PACKAGES = [
-  { id: 'starter', name: 'Starter', price: 5, boost: 4, cap: 50, glow: '#a78bfa', bg: 'rgba(167,139,250,0.15)' },
-  { id: 'builder', name: 'Builder', price: 10, boost: 8, cap: 100, glow: '#60a5fa', bg: 'rgba(96,165,250,0.15)' },
-  { id: 'pioneer', name: 'Pioneer', price: 25, boost: 15, cap: 250, glow: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-  { id: 'elite', name: 'Elite', price: 50, boost: 30, cap: 500, glow: '#ec4899', bg: 'rgba(236,72,153,0.15)' },
-  { id: 'titan', name: 'Titan', price: 100, boost: 60, cap: 1000, glow: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
-  { id: 'dominion', name: 'Dominion', price: 250, boost: 120, cap: 2500, glow: '#f43f5e', bg: 'rgba(244,63,94,0.15)' },
-  { id: 'legacy', name: 'Legacy', price: 500, boost: 300, cap: 5000, glow: '#fbbf24', bg: 'rgba(251,191,36,0.15)' },
-];
+const PACKAGE_COLORS: Record<string, { glow: string; bg: string; color: string }> = {
+  starter: { glow: '#a78bfa', bg: 'rgba(167,139,250,0.15)', color: '#a78bfa' },
+  builder: { glow: '#60a5fa', bg: 'rgba(96,165,250,0.15)', color: '#60a5fa' },
+  pioneer: { glow: '#f59e0b', bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+  elite: { glow: '#ec4899', bg: 'rgba(236,72,153,0.15)', color: '#ec4899' },
+  titan: { glow: '#8b5cf6', bg: 'rgba(139,92,246,0.15)', color: '#8b5cf6' },
+  dominion: { glow: '#f43f5e', bg: 'rgba(244,63,94,0.15)', color: '#f43f5e' },
+  legacy: { glow: '#fbbf24', bg: 'rgba(251,191,36,0.15)', color: '#fbbf24' },
+};
 
 const ICONS: Record<string, React.JSX.Element> = {
   starter: <svg width="22" height="22" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>,
@@ -43,6 +44,7 @@ export default function PackagesPage() {
   const [selectedPkg, setSelectedPkg] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showRules, setShowRules] = useState(false);
 
   const selected = useMemo(() => PACKAGES.find(p => p.id === selectedPkg) || null, [selectedPkg]);
   const active = useMemo(() => PACKAGES.find(p => p.id === activePkg) || null, [activePkg]);
@@ -153,7 +155,10 @@ export default function PackagesPage() {
         {/* Section title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 22, margin: '4px 0 2px' }}>Mining Packages</div>
-          <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+          <div
+            onClick={() => setShowRules(true)}
+            style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+          >
             <svg width="14" height="14" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
           </div>
         </div>
@@ -163,7 +168,7 @@ export default function PackagesPage() {
         {active && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '16px 20px' }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: active.bg }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: PACKAGE_COLORS[active.id]?.bg || 'rgba(167,139,250,0.15)' }}>
                 {ICONS[active.id]}
               </div>
               <div>
@@ -191,6 +196,7 @@ export default function PackagesPage() {
           {PACKAGES.map(p => {
             const isPurchased = purchasedPackages.includes(p.id);
             const isSelected = selectedPkg === p.id && !isPurchased;
+            const pc = PACKAGE_COLORS[p.id] || PACKAGE_COLORS.starter;
             return (
               <button
                 key={p.id}
@@ -205,14 +211,14 @@ export default function PackagesPage() {
                   color: 'white', fontFamily: "'Inter',sans-serif", fontSize: 12
                 }}
               >
-                <div style={{ position: 'absolute', top: -30, right: -30, width: 80, height: 80, borderRadius: '50%', filter: 'blur(30px)', opacity: isSelected ? 0.35 : 0.15, pointerEvents: 'none', transition: '0.4s', background: p.glow }} />
+                <div style={{ position: 'absolute', top: -30, right: -30, width: 80, height: 80, borderRadius: '50%', filter: 'blur(30px)', opacity: isSelected ? 0.35 : 0.15, pointerEvents: 'none', transition: '0.4s', background: pc.glow }} />
                 {isPurchased && (
                   <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 7, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, padding: '3px 8px', borderRadius: 6, background: 'rgba(34,197,94,0.15)', color: '#22c55e', zIndex: 2 }}>DONE</div>
                 )}
                 {!isPurchased && (
                   <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 7, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, padding: '3px 8px', borderRadius: 6, background: 'rgba(167,139,250,0.1)', color: '#a78bfa' }}>{p.name[0]}</div>
                 )}
-                <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, background: p.bg }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, background: pc.bg }}>
                   {ICONS[p.id]}
                 </div>
                 <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 15 }}>{p.name}</div>
@@ -263,6 +269,43 @@ export default function PackagesPage() {
           {purchasing ? 'Processing...' : buyLabel}
         </button>
       </div>
+
+      {/* Upgrade Rules Modal */}
+      {showRules && (
+        <div onClick={() => setShowRules(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#0d0f1a', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 20, padding: '24px 20px', maxWidth: 420, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Upgrade Rules</div>
+              <div onClick={() => setShowRules(false)} style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <svg width="14" height="14" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>
+              <div style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.15)', borderRadius: 14, padding: 14 }}>
+                <div style={{ fontWeight: 800, color: '#a78bfa', marginBottom: 6 }}>1. One Package, One Time</div>
+                <div>Each package can only be purchased <b style={{ color: 'white' }}>once</b>. You cannot buy the same package again. To get more benefits, you must upgrade to a higher package.</div>
+              </div>
+              <div style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.15)', borderRadius: 14, padding: 14 }}>
+                <div style={{ fontWeight: 800, color: '#60a5fa', marginBottom: 6 }}>2. Lifetime Cap Stacking</div>
+                <div>When you upgrade, your new package cap is <b style={{ color: 'white' }}>added</b> to your previous cap. E.g., Builder ($100 cap) + Pioneer ($250 cap) = <b style={{ color: 'white' }}>$350 total cap</b>.</div>
+              </div>
+              <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 14, padding: 14 }}>
+                <div style={{ fontWeight: 800, color: '#22c55e', marginBottom: 6 }}>3. Upgrade Credit (70% Back)</div>
+                <div>If your current package usage is <b style={{ color: 'white' }}>less than 5%</b> of its cap, you get <b style={{ color: 'white' }}>70% of your current package price</b> as credit toward the upgrade.</div>
+              </div>
+              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 14, padding: 14 }}>
+                <div style={{ fontWeight: 800, color: '#f59e0b', marginBottom: 6 }}>4. Mining Boost Changes</div>
+                <div>When you upgrade, your mining boost changes to the <b style={{ color: 'white' }}>new package&apos;s boost</b>. The boost is not added — it replaces the old one.</div>
+              </div>
+              <div style={{ background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.15)', borderRadius: 14, padding: 14 }}>
+                <div style={{ fontWeight: 800, color: '#ec4899', marginBottom: 6 }}>5. Package Order</div>
+                <div>Starter, Builder, Pioneer, Elite, Titan, Dominion, Legacy. You can only upgrade to a <b style={{ color: 'white' }}>higher</b> package.</div>
+              </div>
+            </div>
+            <div onClick={() => setShowRules(false)} style={{ marginTop: 18, width: '100%', padding: 14, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontWeight: 800, fontSize: 13, cursor: 'pointer', textAlign: 'center' }}>Got it</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

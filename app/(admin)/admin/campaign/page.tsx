@@ -3,23 +3,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useToast } from '@/components/ui/Toast';
 import { detectApiUrl } from '@/lib/utils';
-import Loading from '@/components/ui/Loading';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
 
-interface FeedItem {
-  email: string;
-  name?: string;
-  status: string;
-  error?: string;
-}
-
-interface DailyData {
-  today: { count: number; limit: number };
-  history: { date: string; count: number; limit: number }[];
-}
+interface FeedItem { email: string; name?: string; status: string; error?: string; }
+interface DailyData { today: { count: number; limit: number }; history: { date: string; count: number; limit: number }[]; }
 
 export default function AdminCampaignPage() {
   const { uid, loading: authLoading } = useAuth();
@@ -40,9 +27,8 @@ export default function AdminCampaignPage() {
   const [showPreview, setShowPreview] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
-  const { ToastComponent } = useToast();
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (authLoading) return;
@@ -55,11 +41,8 @@ export default function AdminCampaignPage() {
       const apiUrl = detectApiUrl();
       const res = await fetch(`${apiUrl}/api/admin/check`, { headers: { 'x-auth-uid': uid! } });
       if (!res.ok) { router.push('/admin/login'); return; }
-      fetchDailyStats();
-      connectSSE();
-    } catch {
-      router.push('/admin/login');
-    }
+      fetchDailyStats(); connectSSE();
+    } catch { router.push('/admin/login'); }
   }
 
   async function fetchDailyStats() {
@@ -77,34 +60,17 @@ export default function AdminCampaignPage() {
     eventSourceRef.current = es;
     es.onmessage = (e) => {
       const data = JSON.parse(e.data);
-      if (data.type === 'init') {
-        setStats({ sent: data.sent || 0, failed: data.failed || 0, skipped: data.skipped || 0, total: data.total || 0 });
-        data.logs?.forEach((item: FeedItem) => addFeedItem(item));
-        if (data.running) setShowFeed(true);
-      }
+      if (data.type === 'init') { setStats({ sent: data.sent || 0, failed: data.failed || 0, skipped: data.skipped || 0, total: data.total || 0 }); data.logs?.forEach((item: FeedItem) => addFeedItem(item)); if (data.running) setShowFeed(true); }
       if (data.type === 'start') { setStats((s) => ({ ...s, total: data.total })); setFeed([]); setShowFeed(true); }
-      if (data.type === 'sent' || data.type === 'failed') {
-        setStats((s) => ({ ...s, sent: data.sent, failed: data.failed }));
-        addFeedItem({ email: data.email, name: data.name, status: data.type, error: data.error });
-      }
-      if (data.type === 'done') {
-        setStats({ sent: data.sent || 0, failed: data.failed || 0, skipped: data.skipped || 0, total: data.total || 0 });
-        setSending(false);
-        setNotif({ msg: data.failed === 0 ? `All ${data.sent} emails sent!` : `${data.sent} sent, ${data.failed} failed`, type: data.failed > 0 ? 'error' : 'success' });
-      }
+      if (data.type === 'sent' || data.type === 'failed') { setStats((s) => ({ ...s, sent: data.sent, failed: data.failed })); addFeedItem({ email: data.email, name: data.name, status: data.type, error: data.error }); }
+      if (data.type === 'done') { setStats({ sent: data.sent || 0, failed: data.failed || 0, skipped: data.skipped || 0, total: data.total || 0 }); setSending(false); setNotif({ msg: data.failed === 0 ? `All ${data.sent} emails sent!` : `${data.sent} sent, ${data.failed} failed`, type: data.failed > 0 ? 'error' : 'success' }); }
       if (data.type === 'error') { setNotif({ msg: 'Server error: ' + data.message, type: 'error' }); setSending(false); }
     };
     es.onerror = () => {};
   }
 
-  function addFeedItem(item: FeedItem) {
-    setFeed((prev) => [...prev, item]);
-    setTimeout(() => feedRef.current?.scrollTo(0, feedRef.current.scrollHeight), 50);
-  }
-
-  function authHeaders(): Record<string, string> {
-    return { 'Content-Type': 'application/json', 'x-auth-uid': uid! };
-  }
+  function addFeedItem(item: FeedItem) { setFeed((prev) => [...prev, item]); setTimeout(() => feedRef.current?.scrollTo(0, feedRef.current.scrollHeight), 50); }
+  function authHeaders(): Record<string, string> { return { 'Content-Type': 'application/json', 'x-auth-uid': uid! }; }
 
   async function fireBulk() {
     if (!subject.trim()) { setNotif({ msg: 'Enter a subject line.', type: 'error' }); return; }
@@ -112,42 +78,25 @@ export default function AdminCampaignPage() {
     setSending(true); setNotif(null);
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/email/send-custom-bulk`, {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ userType, subject, customHtml: html, skipCooldown }),
-      });
+      const res = await fetch(`${apiUrl}/api/email/send-custom-bulk`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ userType, subject, customHtml: html, skipCooldown }) });
       const data = await res.json();
       if (!data.success) { setNotif({ msg: data.message || 'Request failed', type: 'error' }); setSending(false); }
-    } catch (e: unknown) {
-      setNotif({ msg: 'Error: ' + (e instanceof Error ? e.message : ''), type: 'error' });
-      setSending(false);
-    }
+    } catch (e: unknown) { setNotif({ msg: 'Error: ' + (e instanceof Error ? e.message : ''), type: 'error' }); setSending(false); }
   }
 
   async function fireManual() {
     if (!subject.trim()) { setNotif({ msg: 'Enter a subject line.', type: 'error' }); return; }
     if (!html.trim()) { setNotif({ msg: 'Paste your email HTML template.', type: 'error' }); return; }
     if (!manualEmails.trim()) { setNotif({ msg: 'Enter at least one email.', type: 'error' }); return; }
-    const emails = manualEmails.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
-      const p = l.split(',');
-      const e = p[0].trim();
-      if (!e || !e.includes('@')) return null;
-      return p[1] ? { email: e, name: p[1].trim() } : e;
-    }).filter(Boolean);
+    const emails = manualEmails.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const p = l.split(','); const e = p[0].trim(); if (!e || !e.includes('@')) return null; return p[1] ? { email: e, name: p[1].trim() } : e; }).filter(Boolean);
     if (!emails.length) { setNotif({ msg: 'No valid email addresses.', type: 'error' }); return; }
     setSending(true); setNotif(null);
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/email/send-manual`, {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ emails, subject, customHtml: html }),
-      });
+      const res = await fetch(`${apiUrl}/api/email/send-manual`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ emails, subject, customHtml: html }) });
       const data = await res.json();
       if (!data.success) { setNotif({ msg: data.message || 'Request failed', type: 'error' }); setSending(false); }
-    } catch (e: unknown) {
-      setNotif({ msg: 'Error: ' + (e instanceof Error ? e.message : ''), type: 'error' });
-      setSending(false);
-    }
+    } catch (e: unknown) { setNotif({ msg: 'Error: ' + (e instanceof Error ? e.message : ''), type: 'error' }); setSending(false); }
   }
 
   async function fireCsv() {
@@ -155,19 +104,13 @@ export default function AdminCampaignPage() {
     if (!html.trim()) { setNotif({ msg: 'Paste your email HTML template.', type: 'error' }); return; }
     if (!csvFile) { setNotif({ msg: 'Upload a CSV file first.', type: 'error' }); return; }
     setSending(true); setNotif(null);
-    const fd = new FormData();
-    fd.append('csv', csvFile);
-    fd.append('subject', subject);
-    fd.append('customHtml', html);
+    const fd = new FormData(); fd.append('csv', csvFile); fd.append('subject', subject); fd.append('customHtml', html);
     try {
       const apiUrl = detectApiUrl();
       const res = await fetch(`${apiUrl}/api/email/send-csv`, { method: 'POST', headers: { 'x-auth-uid': uid! }, body: fd });
       const data = await res.json();
       if (!data.success) { setNotif({ msg: data.message || 'Request failed', type: 'error' }); setSending(false); }
-    } catch (e: unknown) {
-      setNotif({ msg: 'Error: ' + (e instanceof Error ? e.message : ''), type: 'error' });
-      setSending(false);
-    }
+    } catch (e: unknown) { setNotif({ msg: 'Error: ' + (e instanceof Error ? e.message : ''), type: 'error' }); setSending(false); }
   }
 
   async function preview() {
@@ -181,173 +124,201 @@ export default function AdminCampaignPage() {
     } catch (e: unknown) { setNotif({ msg: 'Error: ' + (e instanceof Error ? e.message : ''), type: 'error' }); }
   }
 
-  if (authLoading) return <Loading text="Loading campaigns..." />;
+  const SvgMail = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>;
+  const SvgSend = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>;
+  const SvgFile = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>;
+  const SvgEye = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+  const SvgBolt = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+  const SvgUpload = () => <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+  const SvgWarning = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+  const SvgBack = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>;
+
+  if (authLoading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#03040a' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid rgba(167,139,250,0.1)', borderTop: '3px solid #a78bfa', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, textTransform: 'uppercase' as const, fontWeight: 700 }}>Loading campaigns...</div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </div>
+    </div>
+  );
+
+  const FieldLabel = ({ label, badge }: { label: string; badge?: string }) => (
+    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'rgba(255,255,255,0.45)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+      {label} {badge && <span style={{ fontSize: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', padding: '2px 7px', borderRadius: 6, fontWeight: 600 }}>{badge}</span>}
+    </div>
+  );
+  const inputStyle: React.CSSProperties = { width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#fff', padding: '12px 14px', outline: 'none' };
 
   return (
-    <div className="min-h-screen bg-[#03040a] text-white flex flex-col items-center p-5 md:p-10 max-w-[720px] mx-auto">
-      <div className="w-full">
-        <div className="font-[family-name:var(--font-space-grotesk)] font-black text-[22px] bg-gradient-to-r from-[#a78bfa] to-[#60a5fa] bg-clip-text text-transparent">ONCHYRA</div>
-        <div className="text-[11px] text-white/35 font-medium mb-5">Email Campaign Dashboard</div>
+    <div style={{ minHeight: '100vh', background: '#03040a', color: '#fff', fontFamily: "'Inter', sans-serif", padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 720 }}>
+        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: 22, background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 4 }}>ONCHYRA</div>
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>Email Campaign Dashboard</div>
 
-        <div className="flex gap-2.5 mb-4">
+        {/* Stats */}
+        <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
           {[
-            { label: 'Sent', val: stats.sent, color: 'text-green-500' },
-            { label: 'Skipped', val: stats.skipped, color: 'text-yellow-500' },
-            { label: 'Failed', val: stats.failed, color: 'text-red-500' },
-            { label: 'Total', val: stats.total, color: 'text-white' },
+            { label: 'Sent', val: stats.sent, color: '#22c55e' },
+            { label: 'Skipped', val: stats.skipped, color: '#eab308' },
+            { label: 'Failed', val: stats.failed, color: '#ef4444' },
+            { label: 'Total', val: stats.total, color: '#fff' },
           ].map((s) => (
-            <div key={s.label} className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-[14px] p-3.5 text-center">
-              <div className={`font-[family-name:var(--font-space-grotesk)] text-[22px] font-extrabold ${s.color}`}>{s.val}</div>
-              <div className="text-[9px] text-white/35 uppercase tracking-[0.5px] mt-1">{s.label}</div>
+            <div key={s.label} style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 14, textAlign: 'center' }}>
+              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 800, color: s.color }}>{s.val}</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' as const, letterSpacing: 0.5, marginTop: 4 }}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 mb-4">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.5px] text-white/50">Today&apos;s Sends</h3>
-            <div className="font-[family-name:var(--font-space-grotesk)] text-xl font-extrabold"><span>{daily?.today?.count ?? 0}</span> <span className="text-white/30">/ {daily?.today?.limit ?? 450}</span></div>
+        {/* Daily Card */}
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '20px 24px', marginTop: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 0.5, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Today&apos;s Sends</h3>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 800 }}><span>{daily?.today?.count ?? 0}</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>/ {daily?.today?.limit ?? 450}</span></div>
           </div>
-          <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden mb-4">
-            <div className="h-full bg-gradient-to-r from-[#a78bfa] to-[#60a5fa] rounded-full transition-all" style={{ width: `${Math.min(100, ((daily?.today?.count ?? 0) / (daily?.today?.limit ?? 450)) * 100)}%` }} />
+          <div style={{ width: '100%', height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{ height: '100%', width: `${Math.min(100, ((daily?.today?.count ?? 0) / (daily?.today?.limit ?? 450)) * 100)}%`, background: 'linear-gradient(90deg, #a78bfa, #60a5fa)', borderRadius: 99, transition: 'width 0.5s ease' }} />
           </div>
-          <div className="text-[10px] text-white/30 mb-2">Last 7 Days</div>
-          <div className="flex gap-1.5 flex-wrap">
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>Last 7 Days</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {(daily?.history || []).map((d) => {
               const pct = d.count / d.limit;
-              const cls = pct >= 1 ? 'text-red-500' : pct >= 0.5 ? 'text-yellow-500' : 'text-green-500';
+              const cls = pct >= 1 ? '#ef4444' : pct >= 0.5 ? '#eab308' : '#22c55e';
               return (
-                <div key={d.date} className="flex-1 min-w-[70px] bg-white/[0.02] border border-white/[0.05] rounded-[10px] p-2 text-center">
-                  <div className="text-[8px] uppercase tracking-[0.5px] text-white/25">{d.date.slice(5)}</div>
-                  <div className={`font-[family-name:var(--font-space-grotesk)] text-sm font-bold mt-0.5 ${cls}`}>{d.count}</div>
+                <div key={d.date} style={{ flex: '1 1 70px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 8, textTransform: 'uppercase' as const, letterSpacing: 0.5, color: 'rgba(255,255,255,0.25)' }}>{d.date.slice(5)}</div>
+                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, marginTop: 2, color: cls }}>{d.count}</div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="flex gap-1 mb-4 bg-white/[0.03] border border-white/[0.08] rounded-[14px] p-1">
-          {(['bulk', 'manual', 'csv'] as const).map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-2.5 text-center text-[11px] font-bold uppercase tracking-[0.5px] rounded-[10px] cursor-pointer transition-all border-none font-[family-name:var(--font-inter)] ${activeTab === tab ? 'bg-gradient-to-r from-[#a78bfa] to-[#60a5fa] text-black' : 'bg-transparent text-white/35 hover:text-white/60'}`}>
-              {tab === 'bulk' ? 'Bulk' : tab === 'manual' ? 'Manual' : 'CSV'}
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 4, marginTop: 24, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 4 }}>
+          {([
+            { key: 'bulk', label: 'Bulk', icon: <SvgMail /> },
+            { key: 'manual', label: 'Manual', icon: <SvgSend /> },
+            { key: 'csv', label: 'CSV', icon: <SvgFile /> },
+          ] as const).map((tab) => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ flex: 1, padding: 10, textAlign: 'center', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: activeTab === tab.key ? '#000' : 'rgba(255,255,255,0.35)', borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s', border: 'none', background: activeTab === tab.key ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'transparent', fontFamily: "'Inter', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+              {tab.icon} {tab.label}
             </button>
           ))}
         </div>
 
+        {/* Bulk Tab */}
         {activeTab === 'bulk' && (
-          <Card className="mb-4">
-            <div className="flex items-center gap-2 text-[13px] font-bold mb-5">Bulk Campaign</div>
-            <Field label="Target Users">
-              <select value={userType} onChange={(e) => setUserType(e.target.value)} className="w-full py-3 px-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white text-[13px] outline-none focus:border-[#a78bfa]">
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '28px 24px', marginTop: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>Bulk Campaign</div>
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel label="Target Users" />
+              <select value={userType} onChange={(e) => setUserType(e.target.value)} style={{ ...inputStyle, appearance: 'auto' as const }}>
                 <option value="active">Active Users</option><option value="inactive">Inactive Users</option><option value="all">All Users</option>
               </select>
-            </Field>
-            <Field label="Subject Line">
-              <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Welcome to ONCHYRA..." className="w-full py-3 px-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white text-[13px] outline-none focus:border-[#a78bfa]" />
-            </Field>
-            <Field label="Email HTML Template">
-              <div className="flex gap-1.5 mb-2">
-                <Button variant="secondary" size="sm" onClick={preview}>Preview</Button>
+            </div>
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel label="Subject Line" />
+              <input style={inputStyle} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Welcome to ONCHYRA..." />
+            </div>
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel label="Email HTML Template" badge="Use {{ USERNAME }} for name" />
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                <button onClick={preview} style={{ padding: '8px 14px', borderRadius: 8, fontSize: 10, fontWeight: 700, cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 4 }}><SvgEye /> Preview</button>
               </div>
-              <textarea value={html} onChange={(e) => setHtml(e.target.value)} placeholder="Paste your HTML template here..." className="w-full min-h-[160px] p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white text-[13px] outline-none focus:border-[#a78bfa] resize-y leading-relaxed" />
-            </Field>
-            <label className="flex items-center gap-2 mb-3.5 cursor-pointer">
-              <input type="checkbox" checked={skipCooldown} onChange={(e) => setSkipCooldown(e.target.checked)} className="w-auto accent-[#a78bfa]" />
-              <span className="text-[11px] text-white/45">Skip 24hr cooldown (send even if user got email in last 24h)</span>
+              <textarea style={{ ...inputStyle, minHeight: 160, resize: 'vertical' as const, lineHeight: 1.6 }} value={html} onChange={(e) => setHtml(e.target.value)} placeholder="Paste your HTML template here..." />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, cursor: 'pointer' }}>
+              <input type="checkbox" checked={skipCooldown} onChange={(e) => setSkipCooldown(e.target.checked)} style={{ width: 'auto', accentColor: '#a78bfa' }} />
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Skip 24hr cooldown</span>
             </label>
-            <Button onClick={fireBulk} loading={sending} disabled={sending} className="w-full">Send to All</Button>
-          </Card>
+            <button onClick={fireBulk} disabled={sending} style={{ padding: '14px 20px', border: 'none', borderRadius: 12, fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: 0.5, cursor: sending ? 'not-allowed' : 'pointer', background: sending ? 'rgba(167,139,250,0.3)' : 'linear-gradient(135deg, #a78bfa, #60a5fa)', color: '#000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', opacity: sending ? 0.3 : 1 }}>
+              <SvgBolt /> {sending ? 'Sending...' : 'Send to All'}
+            </button>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 10, padding: '10px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <SvgWarning />
+              <div><strong style={{ color: '#eab308' }}>24hr cooldown</strong> — Users who received an email in the last 24 hours will be skipped. <strong>Max 450 emails per campaign.</strong></div>
+            </div>
+          </div>
         )}
 
+        {/* Manual Tab */}
         {activeTab === 'manual' && (
-          <Card className="mb-4">
-            <div className="flex items-center gap-2 text-[13px] font-bold mb-5">Manual Send</div>
-            <Field label="Subject Line">
-              <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Welcome to ONCHYRA..." className="w-full py-3 px-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white text-[13px] outline-none focus:border-[#a78bfa]" />
-            </Field>
-            <Field label="Email HTML Template">
-              <textarea value={html} onChange={(e) => setHtml(e.target.value)} placeholder="Paste your HTML template here..." className="w-full min-h-[160px] p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white text-[13px] outline-none focus:border-[#a78bfa] resize-y leading-relaxed" />
-            </Field>
-            <Field label="Recipient Emails">
-              <textarea value={manualEmails} onChange={(e) => setManualEmails(e.target.value)} placeholder={"john@example.com\njane@example.com, Jane Doe"} className="w-full min-h-[100px] p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white text-[13px] outline-none focus:border-[#a78bfa] resize-y" />
-              <div className="text-[10px] text-white/30 mt-1.5">One per line. Optionally: email, Name</div>
-            </Field>
-            <Button onClick={fireManual} loading={sending} disabled={sending} className="w-full">Send Manually</Button>
-          </Card>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '28px 24px', marginTop: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>Manual Send</div>
+            <div style={{ marginBottom: 18 }}><FieldLabel label="Subject Line" /><input style={inputStyle} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Welcome to ONCHYRA..." /></div>
+            <div style={{ marginBottom: 18 }}><FieldLabel label="Email HTML Template" badge="Use {{ USERNAME }} for name" /><textarea style={{ ...inputStyle, minHeight: 160, resize: 'vertical' as const, lineHeight: 1.6 }} value={html} onChange={(e) => setHtml(e.target.value)} placeholder="Paste your HTML template here..." /></div>
+            <div style={{ marginBottom: 18 }}><FieldLabel label="Recipient Emails" /><textarea style={{ ...inputStyle, minHeight: 100, resize: 'vertical' as const }} value={manualEmails} onChange={(e) => setManualEmails(e.target.value)} placeholder={"john@example.com\njane@example.com, Jane Doe"} /><div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 6, lineHeight: 1.5 }}>One per line. Optionally: <code style={{ background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: 4, color: 'rgba(255,255,255,0.5)' }}>email, Name</code></div></div>
+            <button onClick={fireManual} disabled={sending} style={{ padding: '14px 20px', border: 'none', borderRadius: 12, fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', background: sending ? 'rgba(167,139,250,0.3)' : 'linear-gradient(135deg, #a78bfa, #60a5fa)', color: '#000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', opacity: sending ? 0.3 : 1 }}>
+              <SvgBolt /> {sending ? 'Sending...' : 'Send Manually'}
+            </button>
+          </div>
         )}
 
+        {/* CSV Tab */}
         {activeTab === 'csv' && (
-          <Card className="mb-4">
-            <div className="flex items-center gap-2 text-[13px] font-bold mb-5">CSV Upload</div>
-            <Field label="Subject Line">
-              <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Welcome to ONCHYRA..." className="w-full py-3 px-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white text-[13px] outline-none focus:border-[#a78bfa]" />
-            </Field>
-            <Field label="Email HTML Template">
-              <textarea value={html} onChange={(e) => setHtml(e.target.value)} placeholder="Paste your HTML template here..." className="w-full min-h-[160px] p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white text-[13px] outline-none focus:border-[#a78bfa] resize-y leading-relaxed" />
-            </Field>
-            <Field label="CSV File">
-              <div onClick={() => fileInputRef.current?.click()} className={`border border-dashed border-white/10 rounded-xl p-7 text-center cursor-pointer transition-all hover:border-[#a78bfa] hover:bg-[#a78bfa]/[0.02] ${csvFile ? 'border-green-500/30' : ''}`}>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '28px 24px', marginTop: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>CSV Upload</div>
+            <div style={{ marginBottom: 18 }}><FieldLabel label="Subject Line" /><input style={inputStyle} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Welcome to ONCHYRA..." /></div>
+            <div style={{ marginBottom: 18 }}><FieldLabel label="Email HTML Template" badge="Use {{ USERNAME }} for name" /><textarea style={{ ...inputStyle, minHeight: 160, resize: 'vertical' as const, lineHeight: 1.6 }} value={html} onChange={(e) => setHtml(e.target.value)} placeholder="Paste your HTML template here..." /></div>
+            <div style={{ marginBottom: 18 }}>
+              <FieldLabel label="CSV File" />
+              <div onClick={() => fileInputRef.current?.click()} style={{ border: csvFile ? '1px dashed rgba(34,197,94,0.3)' : '1px dashed rgba(255,255,255,0.1)', borderRadius: 12, padding: '30px 20px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <div style={{ marginBottom: 8 }}><SvgUpload /></div>
                 {csvFile ? (
-                  <div className="text-green-500 text-[11px] font-semibold">{csvFile.name} ({(csvFile.size / 1024).toFixed(1)} KB)</div>
+                  <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 600, marginTop: 8 }}>{csvFile.name} ({(csvFile.size / 1024).toFixed(1)} KB)</div>
                 ) : (
-                  <>
-                    <div className="text-[11px] text-white/35">Click or drop a CSV file here</div>
-                    <div className="text-[9px] text-white/20 mt-1">Format: email or email, Name (one per line)</div>
-                  </>
+                  <><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 8 }}>Click or drop a CSV file here</div><div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>Format: email or email, Name (one per line)</div></>
                 )}
               </div>
-              <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setCsvFile(f); }} />
-            </Field>
-            <Button onClick={fireCsv} loading={sending} disabled={sending} className="w-full">Send CSV</Button>
-          </Card>
+              <input ref={fileInputRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) setCsvFile(f); }} />
+            </div>
+            <button onClick={fireCsv} disabled={sending} style={{ padding: '14px 20px', border: 'none', borderRadius: 12, fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', background: sending ? 'rgba(167,139,250,0.3)' : 'linear-gradient(135deg, #a78bfa, #60a5fa)', color: '#000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', opacity: sending ? 0.3 : 1 }}>
+              <SvgBolt /> {sending ? 'Sending...' : 'Send CSV'}
+            </button>
+          </div>
         )}
 
+        {/* Notification */}
         {notif && (
-          <div className={`mt-4 px-4 py-3.5 rounded-xl text-xs font-semibold border ${notif.type === 'success' ? 'bg-green-500/6 border-green-500/15 text-green-500' : 'bg-red-500/6 border-red-500/15 text-red-500'}`}>
+          <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 12, fontSize: 12, lineHeight: 1.6, border: '1px solid', background: notif.type === 'success' ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)', borderColor: notif.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: notif.type === 'success' ? '#22c55e' : '#ef4444' }}>
             {notif.msg}
           </div>
         )}
 
+        {/* Live Feed */}
         {showFeed && (
-          <div className="mt-4">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="text-[10px] font-bold uppercase tracking-[0.8px] text-white/40">Live Feed</h4>
-              <div className="text-[11px] font-bold font-[family-name:var(--font-space-grotesk)]">
-                <span className="text-green-500">{stats.sent}</span> sent / <span className="text-yellow-500">{stats.skipped}</span> skipped / <span className="text-red-500">{stats.failed}</span> failed
+          <div style={{ marginTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <h4 style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Live Feed</h4>
+              <div style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif" }}>
+                <span style={{ color: '#22c55e' }}>{stats.sent}</span> sent / <span style={{ color: '#eab308' }}>{stats.skipped}</span> skipped / <span style={{ color: '#ef4444' }}>{stats.failed}</span> failed
               </div>
             </div>
-            <div ref={feedRef} className="bg-white/[0.03] border border-white/[0.08] rounded-xl max-h-[220px] overflow-y-auto p-2">
+            <div ref={feedRef} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, maxHeight: 220, overflowY: 'auto', padding: '8px 0' }}>
               {feed.map((item, i) => (
-                <div key={i} className={`flex justify-between items-center py-1.5 px-3.5 text-[11px] border-b border-white/[0.02] last:border-b-0 ${item.status === 'failed' ? 'bg-red-500/[0.03]' : ''}`}>
-                  <span className="text-white/70">{item.email} <span className="text-white/30 text-[10px]">{item.name || ''}</span></span>
-                  <span className={`font-bold text-[9px] uppercase tracking-[0.5px] ${item.status === 'sent' ? 'text-green-500' : item.status === 'skipped' ? 'text-yellow-500' : 'text-red-500'}`}>{item.status === 'sent' ? 'SENT' : item.status === 'skipped' ? 'SKIPPED' : 'FAILED'}</span>
+                <div key={i} style={{ padding: '6px 14px', fontSize: 11, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.02)', background: item.status === 'failed' ? 'rgba(239,68,68,0.03)' : 'transparent' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.7)' }}>{item.email} <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{item.name || ''}</span></span>
+                  <span style={{ fontWeight: 700, fontSize: 9, textTransform: 'uppercase' as const, letterSpacing: 0.5, color: item.status === 'sent' ? '#22c55e' : item.status === 'skipped' ? '#eab308' : '#ef4444' }}>{item.status === 'sent' ? 'SENT' : item.status === 'skipped' ? 'SKIPPED' : 'FAILED'}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        <a href="/admin" className="inline-flex items-center gap-1.5 text-white/35 no-underline text-[11px] font-semibold mt-6 hover:text-white/60 transition-colors">&larr; Back to Admin</a>
+        <a href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.35)', textDecoration: 'none', fontSize: 11, fontWeight: 600, marginTop: 24, transition: 'color 0.2s' }}><SvgBack /> Back to Admin</a>
       </div>
 
+      {/* Preview Modal */}
       {showPreview && (
-        <div className="fixed inset-0 bg-black/85 z-[999] flex items-center justify-center p-10" onClick={(e) => { if (e.target === e.currentTarget) setShowPreview(false); }}>
-          <div className="bg-white rounded-2xl w-full max-w-[600px] max-h-[80vh] overflow-y-auto relative">
-            <button onClick={() => setShowPreview(false)} className="absolute top-3 right-3.5 bg-black/10 border-none rounded-lg w-8 h-8 cursor-pointer flex items-center justify-center hover:bg-black/20">&times;</button>
+        <div style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 999, alignItems: 'center', justifyContent: 'center', padding: 40 }} onClick={(e) => { if (e.target === e.currentTarget) setShowPreview(false); }}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 600, maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
+            <button onClick={() => setShowPreview(false)} style={{ position: 'absolute', top: 12, right: 14, background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
           </div>
         </div>
       )}
-      {ToastComponent}
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="mb-4">
-      <div className="text-[10px] font-bold uppercase tracking-[0.8px] text-white/45 mb-1.5">{label}</div>
-      {children}
     </div>
   );
 }

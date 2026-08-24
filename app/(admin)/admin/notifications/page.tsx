@@ -3,29 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useToast } from '@/components/ui/Toast';
 import { detectApiUrl } from '@/lib/utils';
-import Loading from '@/components/ui/Loading';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
 
-interface NotiUser {
-  id: string;
-  name: string;
-  email: string;
-  balance: number;
-}
-
-interface NotiHistory {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  userId: string;
-  link?: string;
-  linkTitle?: string;
-  createdAt?: number;
-}
+interface NotiUser { id: string; name: string; email: string; balance: number; }
+interface NotiHistory { id: string; type: string; title: string; message: string; userId: string; link?: string; linkTitle?: string; createdAt?: number; }
 
 export default function AdminNotificationsPage() {
   const { uid, loading: authLoading } = useAuth();
@@ -45,7 +26,7 @@ export default function AdminNotificationsPage() {
   const [statTotal, setStatTotal] = useState(0);
   const [statUsers, setStatUsers] = useState(0);
   const [loading, setLoading] = useState(true);
-  const { showToast, ToastComponent } = useToast();
+  const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -60,9 +41,7 @@ export default function AdminNotificationsPage() {
       const res = await fetch(`${apiUrl}/api/admin/check`, { headers: { 'x-auth-uid': uid! } });
       if (!res.ok) { router.push('/admin/login'); return; }
       await Promise.all([loadStats(), loadHistory()]);
-    } catch {
-      router.push('/admin/login');
-    }
+    } catch { router.push('/admin/login'); }
   }
 
   async function loadStats() {
@@ -71,23 +50,14 @@ export default function AdminNotificationsPage() {
       const res = await fetch(`${apiUrl}/api/admin/users`, { headers: { 'x-auth-uid': uid! } });
       if (res.ok) {
         const data = await res.json();
-        const users: NotiUser[] = Array.isArray(data) ? data.map((u: Record<string, unknown>) => ({
-          id: String(u.id || u.uid || ''),
-          name: String(u.name || 'Unknown'),
-          email: String(u.email || ''),
-          balance: Number(u.balance || 0),
-        })) : [];
-        setAllUsers(users);
-        setStatUsers(users.length);
+        const users: NotiUser[] = Array.isArray(data) ? data.map((u: Record<string, unknown>) => ({ id: String(u.id || u.uid || ''), name: String(u.name || 'Unknown'), email: String(u.email || ''), balance: Number(u.balance || 0) })) : [];
+        setAllUsers(users); setStatUsers(users.length);
       }
     } catch { /* ignore */ }
     try {
       const apiUrl = detectApiUrl();
       const res = await fetch(`${apiUrl}/api/admin/notifications/count`, { headers: { 'x-auth-uid': uid! } });
-      if (res.ok) {
-        const data = await res.json();
-        setStatTotal(data.count || 0);
-      }
+      if (res.ok) { const data = await res.json(); setStatTotal(data.count || 0); }
     } catch { /* ignore */ }
     setLoading(false);
   }
@@ -96,298 +66,243 @@ export default function AdminNotificationsPage() {
     try {
       const apiUrl = detectApiUrl();
       const res = await fetch(`${apiUrl}/api/admin/notifications/history`, { headers: { 'x-auth-uid': uid! } });
-      if (res.ok) {
-        const data = await res.json();
-        setHistory(Array.isArray(data) ? data : []);
-      }
+      if (res.ok) { const data = await res.json(); setHistory(Array.isArray(data) ? data : []); }
     } catch { /* ignore */ }
   }
+
+  function showToastMsg(msg: string, error = false) { setToast({ msg, error }); setTimeout(() => setToast(null), 3000); }
 
   function filterUsers(val: string) {
     setUserSearch(val);
     if (val.length < 2) { setUserSearchResults([]); return; }
     const sk = val.toLowerCase();
-    const matches = allUsers.filter((u) =>
-      u.name.toLowerCase().includes(sk) || u.email.toLowerCase().includes(sk)
-    );
-    setUserSearchResults(matches.slice(0, 20));
+    setUserSearchResults(allUsers.filter((u) => u.name.toLowerCase().includes(sk) || u.email.toLowerCase().includes(sk)).slice(0, 20));
   }
 
-  function selectUser(id: string, name: string) {
-    setSelectedUserId(id);
-    setSelectedUserName(name);
-    setUserSearch('');
-    setUserSearchResults([]);
-  }
-
-  function clearUserSelect() {
-    setSelectedUserId(null);
-    setSelectedUserName('');
-  }
+  function selectUser(id: string, name: string) { setSelectedUserId(id); setSelectedUserName(name); setUserSearch(''); setUserSearchResults([]); }
+  function clearUserSelect() { setSelectedUserId(null); setSelectedUserName(''); }
 
   function useTemplate(type: string) {
     const templates: Record<string, { type: string; title: string; msg: string; link?: string }> = {
       update: { type: 'update', title: 'Protocol Update', msg: 'A new update has been posted. Check the Updates section.', link: 'updates.html' },
       poll: { type: 'poll', title: 'New Poll is Live!', msg: 'Your vote matters! Cast your vote now.' },
-      contest: { type: 'update', title: '🏆 Referral Contest Active!', msg: 'Invite friends and climb the leaderboard to win POL rewards!', link: 'contests.html' },
-      warning: { type: 'personal', title: '⚠️ Important Notice', msg: 'Please review your account. Action required.' },
+      contest: { type: 'update', title: 'Referral Contest Active!', msg: 'Invite friends and climb the leaderboard to win POL rewards!', link: 'contests.html' },
+      warning: { type: 'personal', title: 'Important Notice', msg: 'Please review your account. Action required.' },
     };
-    const t = templates[type];
-    if (!t) return;
-    setNotiType(t.type);
-    setTitle(t.title);
-    setMessage(t.msg);
-    if (t.link) {
-      setLinkOn(true);
-      setLinkUrl(t.link);
-      setLinkTitle(t.title);
-    }
+    const t = templates[type]; if (!t) return;
+    setNotiType(t.type); setTitle(t.title); setMessage(t.msg);
+    if (t.link) { setLinkOn(true); setLinkUrl(t.link); setLinkTitle(t.title); }
   }
 
   async function sendNotification() {
-    if (!title.trim() || !message.trim()) { showToast('Title and Message required!', 'error'); return; }
+    if (!title.trim() || !message.trim()) { showToastMsg('Title and Message required!', true); return; }
     try {
       const apiUrl = detectApiUrl();
       const res = await fetch(`${apiUrl}/api/admin/notifications/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
-        body: JSON.stringify({
-          userId: selectedUserId || 'all',
-          type: notiType,
-          title: title.trim(),
-          message: message.trim(),
-          link: linkOn ? linkUrl : '',
-          linkTitle: linkOn ? linkTitle : '',
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        body: JSON.stringify({ userId: selectedUserId || 'all', type: notiType, title: title.trim(), message: message.trim(), link: linkOn ? linkUrl : '', linkTitle: linkOn ? linkTitle : '' }),
       });
       if (!res.ok) throw new Error('Failed');
-      showToast('Notification sent!');
-      clearForm();
-      loadStats();
-      loadHistory();
-    } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : 'Error', 'error');
-    }
+      showToastMsg('Notification sent!');
+      clearForm(); loadStats(); loadHistory();
+    } catch (e: unknown) { showToastMsg(e instanceof Error ? e.message : 'Error', true); }
   }
 
-  function clearForm() {
-    setTitle('');
-    setMessage('');
-    setLinkOn(false);
-    setLinkTitle('');
-    setLinkUrl('');
-    clearUserSelect();
-  }
+  function clearForm() { setTitle(''); setMessage(''); setLinkOn(false); setLinkTitle(''); setLinkUrl(''); clearUserSelect(); }
 
   async function deleteNoti(id: string) {
     if (!confirm('Delete this notification?')) return;
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/notifications/delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
-        body: JSON.stringify({ id }),
-      });
+      const res = await fetch(`${apiUrl}/api/admin/notifications/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! }, body: JSON.stringify({ id }) });
       if (!res.ok) throw new Error('Failed');
-      showToast('Deleted!');
-      loadHistory();
-      loadStats();
-    } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : 'Error', 'error');
-    }
+      showToastMsg('Deleted!'); loadHistory(); loadStats();
+    } catch (e: unknown) { showToastMsg(e instanceof Error ? e.message : 'Error', true); }
   }
 
-  if (loading) return <Loading text="Loading notifications..." />;
+  const SvgSend = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>;
+  const SvgHistory = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>;
+  const SvgUsersIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+  const SvgBell = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+
+  if (loading) return (
+    <div style={{ position: 'fixed', inset: 0, background: '#03040a', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, flexDirection: 'column', gap: 16 }}>
+      <div style={{ width: 40, height: 40, border: '3px solid rgba(167,139,250,0.1)', borderTop: '3px solid #a78bfa', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, textTransform: 'uppercase' as const, fontWeight: 700 }}>Verifying Admin Access...</div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+    </div>
+  );
 
   const showPreview = title.trim() || message.trim();
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', color: 'white', outline: 'none', fontFamily: "'Inter', sans-serif", fontSize: 14 };
+  const labelStyle: React.CSSProperties = { fontSize: 12, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6, marginTop: 12 };
 
   return (
-    <div className="min-h-screen bg-[#03040a] text-white">
-      {/* Sidebar (mobile-friendly tabs) */}
-      <div className="flex gap-2 p-4 bg-[rgba(10,12,25,0.95)] border-b border-white/10 sticky top-0 z-50">
+    <div style={{ minHeight: '100vh', background: '#03040a', color: 'white', fontFamily: "'Inter', sans-serif" }}>
+      {/* Nav */}
+      <div style={{ display: 'flex', gap: 8, padding: 16, background: 'rgba(10,12,25,0.95)', borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'sticky', top: 0, zIndex: 50 }}>
         {([
-          { key: 'send', label: '🚀 Send' },
-          { key: 'history', label: '📜 History' },
-          { key: 'users', label: '👥 Users' },
+          { key: 'send', label: 'Send', icon: <SvgSend /> },
+          { key: 'history', label: 'History', icon: <SvgHistory /> },
+          { key: 'users', label: 'Users', icon: <SvgUsersIcon /> },
         ] as const).map((p) => (
-          <button key={p.key} onClick={() => setActivePage(p.key)} className={`flex-1 py-3 text-center rounded-xl text-sm font-bold cursor-pointer transition-all border-none font-[family-name:var(--font-inter)] ${activePage === p.key ? 'bg-white/5 text-white border-r-[3px] border-r-[var(--primary)]' : 'bg-transparent text-white/50 hover:text-white'}`}>
-            {p.label}
+          <button key={p.key} onClick={() => setActivePage(p.key)} style={{ flex: 1, padding: 12, textAlign: 'center', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', color: activePage === p.key ? 'white' : 'rgba(255,255,255,0.5)', border: 'none', background: activePage === p.key ? 'rgba(255,255,255,0.05)' : 'transparent', borderRight: activePage === p.key ? '3px solid #a78bfa' : 'none', fontFamily: "'Inter', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            {p.icon} {p.label}
           </button>
         ))}
       </div>
 
-      <div className="p-5 md:p-7 max-w-[1000px] mx-auto">
+      <div style={{ padding: '20px 16px', maxWidth: 1000, margin: '0 auto' }}>
         {/* SEND PAGE */}
         {activePage === 'send' && (
           <>
-            <h1 className="font-[family-name:var(--font-space-grotesk)] text-[28px] font-extrabold mb-6">Send Notification</h1>
-
-            <div className="grid grid-cols-2 gap-3.5 mb-7">
-              <Card className="text-center"><div className="text-xs text-white/50 uppercase tracking-wider">Total Sent</div><div className="font-[family-name:var(--font-space-grotesk)] text-[32px] font-extrabold mt-1 text-[var(--primary)]">{statTotal}</div></Card>
-              <Card className="text-center"><div className="text-xs text-white/50 uppercase tracking-wider">Total Users</div><div className="font-[family-name:var(--font-space-grotesk)] text-[32px] font-extrabold mt-1 text-green-500">{statUsers}</div></Card>
+            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 800, margin: '0 0 25px' }}>Send Notification</h1>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15, marginBottom: 30 }}>
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20 }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' as const, letterSpacing: 1 }}>Total Sent</div><div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 32, fontWeight: 800, marginTop: 5, color: '#a78bfa' }}>{statTotal}</div></div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20 }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' as const, letterSpacing: 1 }}>Total Users</div><div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 32, fontWeight: 800, marginTop: 5, color: '#22c55e' }}>{statUsers}</div></div>
             </div>
-
-            <Card>
-              <div className="font-[family-name:var(--font-space-grotesk)] text-sm font-bold mb-2.5">Quick Templates</div>
-              <div className="flex gap-2 flex-wrap mb-4">
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18, padding: 20, marginBottom: 20 }}>
+              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Quick Templates</div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 15, flexWrap: 'wrap' }}>
                 {[
-                  { key: 'update', label: '📢 Update' },
-                  { key: 'poll', label: '📊 Poll' },
-                  { key: 'contest', label: '🏆 Contest' },
-                  { key: 'warning', label: '⚠️ Warning' },
+                  { key: 'update', label: 'Update' },
+                  { key: 'poll', label: 'Poll' },
+                  { key: 'contest', label: 'Contest' },
+                  { key: 'warning', label: 'Warning' },
                 ].map((t) => (
-                  <button key={t.key} onClick={() => useTemplate(t.key)} className="px-4 py-2 rounded-[10px] text-xs font-bold bg-white/[0.04] border border-white/[0.1] text-white/70 cursor-pointer hover:bg-[var(--primary)]/10 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all">
-                    {t.label}
-                  </button>
+                  <button key={t.key} onClick={() => useTemplate(t.key)} style={{ padding: '8px 16px', borderRadius: 10, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', transition: '0.2s' }}>{t.label}</button>
                 ))}
               </div>
-
-              <div className="mb-3.5">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Target</label>
-                <div className="relative">
-                  <input type="text" value={userSearch} onChange={(e) => filterUsers(e.target.value)} placeholder="Search user by name or email..." className="w-full py-3 px-3.5 rounded-[10px] border border-white/[0.1] bg-white/[0.03] text-white text-sm outline-none focus:border-[var(--primary)]" />
-                  {userSearchResults.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 bg-[#0b0d18] border border-white/[0.1] rounded-[10px] max-h-[200px] overflow-y-auto z-50 mt-1">
-                      {userSearchResults.map((u) => (
-                        <div key={u.id} onClick={() => selectUser(u.id, u.name)} className="px-3.5 py-2.5 cursor-pointer border-b border-white/[0.03] hover:bg-[var(--primary)]/8 text-[13px]">
-                          <div className="font-semibold">{u.name}</div>
-                          <div className="text-[11px] text-white/35">{u.email}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {selectedUserId && (
-                  <div className="flex items-center gap-2.5 mt-1.5 px-3.5 py-2.5 bg-[var(--primary)]/8 border border-[var(--primary)]/20 rounded-[10px]">
-                    <div><div className="font-semibold text-[13px]">{selectedUserName}</div></div>
-                    <button onClick={clearUserSelect} className="ml-auto bg-transparent border-none text-white/30 cursor-pointer text-lg hover:text-red-500">&times;</button>
+              <label style={labelStyle}>TARGET</label>
+              <div style={{ position: 'relative' }}>
+                <input style={inputStyle} value={userSearch} onChange={(e) => filterUsers(e.target.value)} placeholder="Search user by name or email..." />
+                {userSearchResults.length > 0 && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#0b0d18', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, maxHeight: 200, overflowY: 'auto', zIndex: 100, marginTop: 4 }}>
+                    {userSearchResults.map((u) => (
+                      <div key={u.id} onClick={() => selectUser(u.id, u.name)} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 13 }}>
+                        <div style={{ fontWeight: 600 }}>{u.name}</div><div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{u.email}</div>
+                      </div>
+                    ))}
                   </div>
                 )}
-                <div className="text-[11px] text-white/30 mt-1">{selectedUserId ? 'Selected: ' + selectedUserName : 'All Users'}</div>
               </div>
+              {selectedUserId && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 10, marginTop: 6 }}>
+                  <div><div style={{ fontWeight: 600, fontSize: 13 }}>{selectedUserName}</div></div>
+                  <button onClick={clearUserSelect} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 16 }}>&times;</button>
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>{selectedUserId ? 'Selected: ' + selectedUserName : 'All Users'}</div>
 
-              <div className="mb-3.5">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Type</label>
-                <select value={notiType} onChange={(e) => setNotiType(e.target.value)} className="w-full py-3 px-3.5 rounded-[10px] border border-white/[0.1] bg-white/[0.03] text-white text-sm outline-none focus:border-[var(--primary)]">
-                  <option value="update">📢 Update</option>
-                  <option value="poll">📊 Poll</option>
-                  <option value="personal">💬 Personal</option>
-                </select>
-              </div>
+              <label style={labelStyle}>TYPE</label>
+              <select value={notiType} onChange={(e) => setNotiType(e.target.value)} style={{ ...inputStyle, appearance: 'auto' as const }}>
+                <option value="update">Update</option>
+                <option value="poll">Poll</option>
+                <option value="personal">Personal</option>
+              </select>
 
-              <div className="mb-3.5">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Title</label>
-                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Notification title..." className="w-full py-3 px-3.5 rounded-[10px] border border-white/[0.1] bg-white/[0.03] text-white text-sm outline-none focus:border-[var(--primary)]" />
-              </div>
+              <label style={labelStyle}>TITLE</label>
+              <input style={inputStyle} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Notification title..." />
 
-              <div className="mb-3.5">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Message</label>
-                <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Write your message..." className="w-full min-h-[100px] py-3 px-3.5 rounded-[10px] border border-white/[0.1] bg-white/[0.03] text-white text-sm outline-none focus:border-[var(--primary)] resize-vertical" />
-              </div>
+              <label style={labelStyle}>MESSAGE</label>
+              <textarea style={{ ...inputStyle, minHeight: 100, resize: 'vertical' as const }} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Write your message..." />
 
-              <div className="flex items-center gap-3 mt-3 mb-3.5">
-                <label className="relative inline-block w-10 h-[22px] flex-shrink-0 cursor-pointer">
-                  <input type="checkbox" checked={linkOn} onChange={(e) => { setLinkOn(e.target.checked); if (!e.target.checked) { setLinkTitle(''); setLinkUrl(''); } }} className="opacity-0 w-0 h-0 absolute" />
-                  <span className={`absolute inset-0 rounded-[22px] cursor-pointer transition-all ${linkOn ? 'bg-[var(--primary)]' : 'bg-white/10'}`}>
-                    <span className={`absolute left-[3px] top-[3px] w-4 h-4 rounded-full transition-all ${linkOn ? 'translate-x-[18px] bg-black' : 'bg-white/40'}`} />
+              {/* Link Toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+                <label style={{ position: 'relative', width: 40, height: 22, flexShrink: 0, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={linkOn} onChange={(e) => { setLinkOn(e.target.checked); if (!e.target.checked) { setLinkTitle(''); setLinkUrl(''); } }} style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }} />
+                  <span style={{ position: 'absolute', inset: 0, background: linkOn ? '#a78bfa' : 'rgba(255,255,255,0.1)', borderRadius: 22, cursor: 'pointer', transition: '0.3s' }}>
+                    <span style={{ position: 'absolute', width: 16, height: 16, left: linkOn ? 21 : 3, top: 3, background: linkOn ? '#000' : 'rgba(255,255,255,0.4)', borderRadius: '50%', transition: '0.3s' }} />
                   </span>
                 </label>
-                <span className="text-xs text-white/50">Include Link</span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Include Link</span>
               </div>
               {linkOn && (
-                <div className="mb-3.5">
-                  <div className="mb-2.5">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Link Title</label>
-                    <input type="text" value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="e.g. View Update" className="w-full py-3 px-3.5 rounded-[10px] border border-white/[0.1] bg-white/[0.03] text-white text-sm outline-none focus:border-[var(--primary)]" />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-white/40 mb-1.5">Link URL</label>
-                    <input type="text" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="e.g. updates.html" className="w-full py-3 px-3.5 rounded-[10px] border border-white/[0.1] bg-white/[0.03] text-white text-sm outline-none focus:border-[var(--primary)]" />
-                  </div>
+                <div style={{ marginTop: 10 }}>
+                  <label style={labelStyle}>LINK TITLE</label>
+                  <input style={inputStyle} value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="e.g. View Update" />
+                  <label style={labelStyle}>LINK URL</label>
+                  <input style={inputStyle} value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="e.g. updates.html" />
                 </div>
               )}
 
               {showPreview && (
-                <div className="bg-white/[0.03] border border-white/[0.1] rounded-[14px] p-4 mt-3.5">
-                  <div className="text-[9px] text-white/30 font-extrabold uppercase tracking-wider mb-2">Preview</div>
-                  <div className="font-bold mb-1">{title || '(no title)'}</div>
-                  <div className="text-xs text-white/50">{message || '(no message)'}</div>
-                  {linkOn && linkUrl && <a href="#" onClick={(e) => e.preventDefault()} className="text-[11px] text-[var(--secondary)] underline mt-1.5 block">{linkTitle || linkUrl}</a>}
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 16, marginTop: 15 }}>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 800, letterSpacing: 1, marginBottom: 8 }}>PREVIEW</div>
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{title || '(no title)'}</div>
+                  <div style={{ fontSize: 12, opacity: 0.5 }}>{message || '(no message)'}</div>
+                  {linkOn && linkUrl && <a href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 11, color: '#60a5fa', textDecoration: 'underline', marginTop: 6, display: 'block' }}>{linkTitle || linkUrl}</a>}
                 </div>
               )}
 
-              <div className="flex gap-2.5 mt-5">
-                <Button onClick={sendNotification} className="flex-1">🚀 Send Now</Button>
-                <Button variant="secondary" onClick={clearForm} className="flex-1">Clear</Button>
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <button onClick={sendNotification} style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: 'pointer', border: 'none', background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', color: '#000', fontFamily: "'Inter', sans-serif" }}>Send Now</button>
+                <button onClick={clearForm} style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', fontFamily: "'Inter', sans-serif" }}>Clear</button>
               </div>
-            </Card>
+            </div>
           </>
         )}
 
         {/* HISTORY PAGE */}
         {activePage === 'history' && (
           <>
-            <h1 className="font-[family-name:var(--font-space-grotesk)] text-[28px] font-extrabold mb-6">History</h1>
-            <Card padding="sm">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-[13px]">
-                  <thead><tr>{['Type', 'Title', 'Target', 'Link', 'Time', 'Actions'].map((h) => <th key={h} className="text-left py-3 px-2.5 text-white/50 border-b border-white/[0.1] text-[11px] uppercase tracking-wider">{h}</th>)}</tr></thead>
+            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 800, margin: '0 0 25px' }}>History</h1>
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18, padding: 20, marginBottom: 20, overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead><tr>{['Type', 'Title', 'Target', 'Link', 'Time', 'Actions'].map((h) => <th key={h} style={{ textAlign: 'left', padding: '12px 10px', color: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(255,255,255,0.1)', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: 1 }}>{h}</th>)}</tr></thead>
                   <tbody>
                     {history.length === 0 ? (
-                      <tr><td colSpan={6} className="text-center py-8 text-white/30">No notifications yet</td></tr>
+                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 30, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>No notifications yet</td></tr>
                     ) : history.map((n) => (
-                      <tr key={n.id} className="border-b border-white/[0.03]">
-                        <td className="py-3 px-2.5">
-                          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${n.type === 'update' ? 'bg-[var(--secondary)]/15 text-[var(--secondary)]' : n.type === 'poll' ? 'bg-green-500/15 text-green-500' : 'bg-yellow-500/15 text-yellow-500'}`}>
-                            {n.type === 'update' ? 'Update' : n.type === 'poll' ? 'Poll' : 'Personal'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-2.5 font-bold">{n.title || '-'}</td>
-                        <td className="py-3 px-2.5">
-                          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${n.userId === 'all' ? 'bg-green-500/15 text-green-500' : 'bg-[var(--primary)]/15 text-[var(--primary)]'}`}>
-                            {n.userId === 'all' ? 'All' : 'User'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-2.5 text-[var(--secondary)] text-xs">{n.linkTitle || n.link || <span className="opacity-20">-</span>}</td>
-                        <td className="py-3 px-2.5 text-[11px] opacity-40 whitespace-nowrap">{n.createdAt ? new Date(n.createdAt).toLocaleString() : '-'}</td>
-                        <td className="py-3 px-2.5">
-                          <button onClick={() => deleteNoti(n.id)} className="px-3 py-1.5 bg-red-500/15 text-red-500 border-none rounded-lg text-[11px] font-bold cursor-pointer hover:bg-red-500/25 transition-colors">Delete</button>
-                        </td>
+                      <tr key={n.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <td style={{ padding: '12px 10px' }}><span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: n.type === 'update' ? 'rgba(96,165,250,0.15)' : n.type === 'poll' ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)', color: n.type === 'update' ? '#60a5fa' : n.type === 'poll' ? '#22c55e' : '#eab308' }}>{n.type === 'update' ? 'Update' : n.type === 'poll' ? 'Poll' : 'Personal'}</span></td>
+                        <td style={{ padding: '12px 10px', fontWeight: 700 }}>{n.title || '-'}</td>
+                        <td style={{ padding: '12px 10px' }}><span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: n.userId === 'all' ? 'rgba(34,197,94,0.15)' : 'rgba(167,139,250,0.15)', color: n.userId === 'all' ? '#22c55e' : '#a78bfa' }}>{n.userId === 'all' ? 'All' : 'User'}</span></td>
+                        <td style={{ padding: '12px 10px', color: '#60a5fa', fontSize: 12 }}>{n.linkTitle || n.link || <span style={{ opacity: 0.2 }}>-</span>}</td>
+                        <td style={{ padding: '12px 10px', fontSize: 11, opacity: 0.4, whiteSpace: 'nowrap' as const }}>{n.createdAt ? new Date(n.createdAt).toLocaleString() : '-'}</td>
+                        <td style={{ padding: '12px 10px' }}><button onClick={() => deleteNoti(n.id)} style={{ padding: '6px 12px', background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Delete</button></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </Card>
+            </div>
           </>
         )}
 
         {/* USERS PAGE */}
         {activePage === 'users' && (
           <>
-            <h1 className="font-[family-name:var(--font-space-grotesk)] text-[28px] font-extrabold mb-6">Users</h1>
-            <Card padding="sm">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-[13px]">
-                  <thead><tr>{['Name', 'Email', 'Balance'].map((h) => <th key={h} className="text-left py-3 px-2.5 text-white/50 border-b border-white/[0.1] text-[11px] uppercase tracking-wider">{h}</th>)}</tr></thead>
+            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 800, margin: '0 0 25px' }}>Users</h1>
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18, padding: 20, overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead><tr>{['Name', 'Email', 'Balance'].map((h) => <th key={h} style={{ textAlign: 'left', padding: '12px 10px', color: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(255,255,255,0.1)', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: 1 }}>{h}</th>)}</tr></thead>
                   <tbody>
                     {allUsers.length === 0 ? (
-                      <tr><td colSpan={3} className="text-center py-8 text-white/30">No users found</td></tr>
+                      <tr><td colSpan={3} style={{ textAlign: 'center', padding: 30, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>No users found</td></tr>
                     ) : allUsers.map((u) => (
-                      <tr key={u.id} className="border-b border-white/[0.03]">
-                        <td className="py-3 px-2.5 font-bold">{u.name}</td>
-                        <td className="py-3 px-2.5 text-xs opacity-50">{u.email}</td>
-                        <td className="py-3 px-2.5 font-bold text-[var(--primary)]">{u.balance.toFixed(2)}</td>
+                      <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <td style={{ padding: '12px 10px', fontWeight: 700 }}>{u.name}</td>
+                        <td style={{ padding: '12px 10px', fontSize: 12, opacity: 0.5 }}>{u.email}</td>
+                        <td style={{ padding: '12px 10px', fontWeight: 700, color: '#a78bfa' }}>{u.balance.toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </Card>
+            </div>
           </>
         )}
       </div>
-      {ToastComponent}
+
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 30, right: 30, background: toast.error ? '#ef4444' : '#22c55e', color: toast.error ? 'white' : '#000', padding: '14px 24px', borderRadius: 12, fontWeight: 700, zIndex: 3000, fontSize: 13, boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}>
+          {toast.msg}
+        </div>
+      )}
     </div>
   );
 }

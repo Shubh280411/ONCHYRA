@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -17,15 +17,31 @@ interface LeaderEntry {
 }
 
 const MEDAL_SVG = {
-  gold: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="5" fill="#fbbf24" stroke="#b45309" strokeWidth="1.5" /><path d="M8 21l4-3 4 3V12H8v9z" fill="#fbbf24" stroke="#b45309" strokeWidth="1.5" /></svg>,
-  silver: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="5" fill="#94a3b8" stroke="#475569" strokeWidth="1.5" /><path d="M8 21l4-3 4 3V12H8v9z" fill="#94a3b8" stroke="#475569" strokeWidth="1.5" /></svg>,
-  bronze: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="5" fill="#d97706" stroke="#78350f" strokeWidth="1.5" /><path d="M8 21l4-3 4 3V12H8v9z" fill="#d97706" stroke="#78350f" strokeWidth="1.5" /></svg>,
+  gold: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="8" r="5" fill="#fbbf24" stroke="#b45309" strokeWidth="1.5" />
+      <path d="M8 21l4-3 4 3V12H8v9z" fill="#fbbf24" stroke="#b45309" strokeWidth="1.5" />
+    </svg>
+  ),
+  silver: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="8" r="5" fill="#94a3b8" stroke="#475569" strokeWidth="1.5" />
+      <path d="M8 21l4-3 4 3V12H8v9z" fill="#94a3b8" stroke="#475569" strokeWidth="1.5" />
+    </svg>
+  ),
+  bronze: (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="8" r="5" fill="#d97706" stroke="#78350f" strokeWidth="1.5" />
+      <path d="M8 21l4-3 4 3V12H8v9z" fill="#d97706" stroke="#78350f" strokeWidth="1.5" />
+    </svg>
+  ),
 };
 
 export default function LeaderboardPage() {
   const { uid } = useAuth();
   const { showToast, ToastComponent } = useToast();
   const apiUrl = detectApiUrl();
+  const myRankRef = useRef<HTMLDivElement | null>(null);
 
   const [topUsers, setTopUsers] = useState<LeaderEntry[]>([]);
   const [myRank, setMyRank] = useState<number | null>(null);
@@ -61,8 +77,7 @@ export default function LeaderboardPage() {
   }, [topUsers, search]);
 
   function scrollToMe() {
-    const el = document.getElementById('my-rank-item');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    myRankRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   if (loading) {
@@ -99,7 +114,8 @@ export default function LeaderboardPage() {
           <div style={{ fontFamily: "'Space Grotesk'", fontSize: 48, fontWeight: 800, color: 'white', lineHeight: 1, marginBottom: 10, position: 'relative', zIndex: 1 }}>
             {myRank ? `#${myRank.toLocaleString()}` : '--'}
           </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '5px 15px', borderRadius: 20, display: 'inline-block', position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '5px 15px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 6, position: 'relative', zIndex: 1 }}>
+            <svg width="14" height="14" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             {formatUSD(myBalance)} ONC
           </div>
         </div>
@@ -109,27 +125,39 @@ export default function LeaderboardPage() {
           {/* List Header */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 15px 15px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: 15 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-              <h3 style={{ fontFamily: "'Space Grotesk'", fontSize: 18, fontWeight: 700, margin: 0 }}>Top Validators</h3>
-              <span style={{ fontSize: 12, opacity: 0.5 }}>{totalUsers.toLocaleString()} Validators</span>
+              <h3 style={{ fontFamily: "'Space Grotesk'", fontSize: 18, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="18" height="18" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                Top Validators
+              </h3>
+              <span style={{ fontSize: 12, opacity: 0.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="10" height="10" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
+                {totalUsers.toLocaleString()} Validators
+              </span>
             </div>
           </div>
 
           {/* Search */}
           <div style={{ padding: '0 15px 15px' }}>
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search by name..."
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(255,255,255,0.03)', color: 'white', fontSize: 13, fontFamily: "'Inter'", outline: 'none' }}
-              onFocus={e => { e.currentTarget.style.borderColor = '#a78bfa'; }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'; }}
-            />
+            <div style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+              </div>
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search by name..."
+                style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 12, border: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(255,255,255,0.03)', color: 'white', fontSize: 13, fontFamily: "'Inter'", outline: 'none', boxSizing: 'border-box' }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#a78bfa'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'; }}
+              />
+            </div>
           </div>
 
           {/* Leaderboard List */}
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 20px', opacity: 0.3, fontSize: 13 }}>
+              <svg width="32" height="32" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" strokeLinecap="round" viewBox="0 0 24 24" style={{ margin: '0 auto 12px' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
               {search ? 'No validators match your search' : 'No validators found'}
             </div>
           ) : (
@@ -147,7 +175,7 @@ export default function LeaderboardPage() {
                 return (
                   <div
                     key={u.uid}
-                    id={isMe ? 'my-rank-item' : undefined}
+                    ref={isMe ? myRankRef : undefined}
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       padding: '12px 15px', marginBottom: 10, borderRadius: 18,
@@ -175,14 +203,19 @@ export default function LeaderboardPage() {
           )}
 
           {/* Scroll to me */}
-          {myRank && (
+          {myRank && myRank > 10 && (
             <div style={{ textAlign: 'center', padding: '10px 0 5px' }}>
               <button
                 onClick={scrollToMe}
-                style={{ padding: '8px 20px', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 100, background: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: '0.2s' }}
+                style={{
+                  padding: '8px 20px', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 100,
+                  background: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: 11, fontWeight: 700,
+                  cursor: 'pointer', transition: '0.2s', display: 'inline-flex', alignItems: 'center', gap: 6
+                }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(167,139,250,0.2)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'rgba(167,139,250,0.1)'; }}
               >
+                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 16 12 12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
                 Scroll to my rank
               </button>
             </div>

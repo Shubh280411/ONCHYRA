@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { detectApiUrl } from '@/lib/utils';
-import Loading from '@/components/ui/Loading';
 import { AdminStats } from '@/types';
 
 const RANKS = ['Ignition', 'Momentum', 'Velocity', 'Quantum', 'Fusion', 'Infinity', 'Titan', 'Apex', 'Zenith', 'Legacy'];
@@ -37,17 +36,23 @@ export default function AdminStatsPage() {
       const apiUrl = detectApiUrl();
       const res = await fetch(`${apiUrl}/api/admin/stats`, { headers: { 'x-auth-uid': uid! } });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      setCached(data);
+      setCached(await res.json());
       setLoading(false);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load');
-      setLoading(false);
-    }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : 'Failed to load'); setLoading(false); }
   }
 
-  if (loading) return <Loading text="Loading stats..." />;
-  if (error) return <div className="p-10 text-center text-red-400">Failed to load stats: {error}</div>;
+  const SvgChart = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#03040a' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid rgba(167,139,250,0.1)', borderTop: '3px solid #a78bfa', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, textTransform: 'uppercase' as const, fontWeight: 700 }}>Loading stats...</div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </div>
+    </div>
+  );
+  if (error) return <div style={{ padding: 40, textAlign: 'center', color: '#f87171' }}>Failed to load stats: {error}</div>;
   if (!cached) return null;
 
   const u = cached;
@@ -64,11 +69,7 @@ export default function AdminStatsPage() {
 
   const rankCount: Record<string, number> = {};
   let unranked = 0;
-  (u.users || []).forEach((us) => {
-    const r = us.rank;
-    if (r && RANKS.includes(r)) rankCount[r] = (rankCount[r] || 0) + 1;
-    else unranked++;
-  });
+  (u.users || []).forEach((us) => { const r = us.rank; if (r && RANKS.includes(r)) rankCount[r] = (rankCount[r] || 0) + 1; else unranked++; });
   const rankTotal = Object.values(rankCount).reduce((a, b) => a + b, 0) + unranked;
 
   const pkgSales = u.packageBreakdown || [];
@@ -83,34 +84,48 @@ export default function AdminStatsPage() {
     if ((us.streakDays || 0) >= 7) streakUsers++;
   });
 
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18, padding: 20, marginBottom: 20 }}>
+      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>{title}</div>
+      {children}
+    </div>
+  );
+
+  const Table = ({ headers, children }: { headers: string[]; children: React.ReactNode }) => (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <thead><tr>{headers.map((h) => <th key={h} style={{ textAlign: 'left', padding: '10px 8px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' as const, letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>{h}</th>)}</tr></thead>
+      <tbody>{children}</tbody>
+    </table>
+  );
+
+  const Empty = () => <em style={{ opacity: 0.3, fontSize: 14 }}>No data available</em>;
+
   return (
-    <div className="min-h-screen bg-[#03040a] text-white p-7 max-w-[1200px] mx-auto">
-      <h1 className="font-[family-name:var(--font-space-grotesk)] text-[28px] font-extrabold mb-6 flex items-center gap-2.5">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        ONCHYRA — Stats &amp; Analytics
+    <div style={{ minHeight: '100vh', background: '#03040a', color: 'white', padding: 28, maxWidth: 1200, margin: '0 auto', fontFamily: "'Inter', sans-serif" }}>
+      <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 800, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10, marginTop: 0 }}>
+        <SvgChart /> ONCHYRA — Stats & Analytics
       </h1>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 mb-7">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 28 }}>
         {[
-          { label: 'Total Deposits', val: `$${totalDeposits.toFixed(2)}`, sub: `${Math.round(totalDeposits / 25)} packages worth`, color: 'text-green-500' },
-          { label: 'Total Withdrawals', val: `$${totalWithdrawals.toFixed(2)}`, sub: `Net: $${(totalDeposits - totalWithdrawals).toFixed(2)}`, color: 'text-red-500' },
-          { label: 'Rewards Paid Out', val: `$${(totalRewards + totalAchievement).toFixed(2)}`, sub: `$${totalRewards.toFixed(2)} daily + $${totalAchievement.toFixed(2)} bonuses`, color: 'text-yellow-500' },
-          { label: 'Total Users', val: String(totalUsers), sub: `${activeUsers} active package holders`, color: 'text-[var(--secondary)]' },
-          { label: 'Held Commission', val: `$${totalCommission.toFixed(2)}`, sub: `$${totalWallet.toFixed(2)} in wallet balances`, color: 'text-[var(--primary)]' },
-          { label: 'Avg per User', val: `$${totalUsers > 0 ? (totalDeposits / totalUsers).toFixed(2) : '0.00'}`, sub: `$${totalUsers > 0 ? (totalWithdrawals / totalUsers).toFixed(2) : '0.00'} avg withdrawal`, color: 'text-orange-400' },
+          { label: 'Total Deposits', val: `$${totalDeposits.toFixed(2)}`, sub: `${Math.round(totalDeposits / 25)} packages worth`, color: '#22c55e' },
+          { label: 'Total Withdrawals', val: `$${totalWithdrawals.toFixed(2)}`, sub: `Net: $${(totalDeposits - totalWithdrawals).toFixed(2)}`, color: '#ef4444' },
+          { label: 'Rewards Paid Out', val: `$${(totalRewards + totalAchievement).toFixed(2)}`, sub: `$${totalRewards.toFixed(2)} daily + $${totalAchievement.toFixed(2)} bonuses`, color: '#eab308' },
+          { label: 'Total Users', val: String(totalUsers), sub: `${activeUsers} active package holders`, color: '#60a5fa' },
+          { label: 'Held Commission', val: `$${totalCommission.toFixed(2)}`, sub: `$${totalWallet.toFixed(2)} in wallet balances`, color: '#a78bfa' },
+          { label: 'Avg per User', val: `$${totalUsers > 0 ? (totalDeposits / totalUsers).toFixed(2) : '0.00'}`, sub: `$${totalUsers > 0 ? (totalWithdrawals / totalUsers).toFixed(2) : '0.00'} avg withdrawal`, color: '#fb923c' },
         ].map((c) => (
-          <div key={c.label} className="bg-white/[0.04] border border-white/[0.1] rounded-2xl p-5 transition-all hover:border-white/20">
-            <div className="text-[11px] text-white/50 uppercase tracking-wider mb-1 flex items-center gap-1.5">{c.label}</div>
-            <div className={`font-[family-name:var(--font-space-grotesk)] text-[30px] font-extrabold ${c.color}`}>{c.val}</div>
-            <div className="text-xs opacity-40 mt-0.5">{c.sub}</div>
+          <div key={c.label} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 20, transition: 'border-color 0.3s' }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 4 }}>{c.label}</div>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 30, fontWeight: 800, color: c.color }}>{c.val}</div>
+            <div style={{ fontSize: 12, opacity: 0.4, marginTop: 2 }}>{c.sub}</div>
           </div>
         ))}
       </div>
 
       {/* Two column sections */}
-      <div className="grid grid-cols-2 gap-5 mb-5 max-md:grid-cols-1">
-        {/* Pending Withdrawals */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
         <Section title="Pending Withdrawals">
           {allPending.length === 0 ? <Empty /> : (
             <>
@@ -118,27 +133,25 @@ export default function AdminStatsPage() {
                 {allPending.slice(0, 10).map((w, i) => (
                   <tr key={i}>
                     <td>{(w.uid || '').slice(0, 8)}...</td>
-                    <td className="font-bold text-yellow-500">${Number(w.amount || 0).toFixed(2)}</td>
-                    <td className="text-[9px]">{(w.wallet || '-').slice(0, 14)}...</td>
-                    <td className="text-[11px] opacity-50">{w.createdAt ? new Date(toMs(w.createdAt)).toLocaleDateString() : '-'}</td>
+                    <td style={{ fontWeight: 700, color: '#eab308' }}>${Number(w.amount || 0).toFixed(2)}</td>
+                    <td style={{ fontSize: 9 }}>{(w.wallet || '-').slice(0, 14)}...</td>
+                    <td style={{ fontSize: 11, opacity: 0.5 }}>{w.createdAt ? new Date(toMs(w.createdAt)).toLocaleDateString() : '-'}</td>
                   </tr>
                 ))}
               </Table>
-              <div className="mt-2 text-xs opacity-50">Total pending: {allPending.length} requests · ${allPending.reduce((s, w) => s + Number(w.amount || 0), 0).toFixed(2)}</div>
+              <div style={{ marginTop: 8, fontSize: 12, opacity: 0.5 }}>Total pending: {allPending.length} requests · ${allPending.reduce((s, w) => s + Number(w.amount || 0), 0).toFixed(2)}</div>
             </>
           )}
         </Section>
-
-        {/* Large Pending */}
         <Section title="Large Pending ($50+)">
           {bigPending.length === 0 ? <Empty /> : (
             <Table headers={['User', 'Amount', 'Wallet', 'Date']}>
               {bigPending.map((w, i) => (
-                <tr key={i} className="bg-red-500/5">
+                <tr key={i} style={{ background: 'rgba(239,68,68,0.05)' }}>
                   <td>{(w.uid || '').slice(0, 8)}...</td>
-                  <td className="font-extrabold text-red-500">${Number(w.amount || 0).toFixed(2)}</td>
-                  <td className="text-[9px]">{(w.wallet || '-').slice(0, 14)}...</td>
-                  <td className="text-[11px] opacity-50">{w.createdAt ? new Date(toMs(w.createdAt)).toLocaleDateString() : '-'}</td>
+                  <td style={{ fontWeight: 800, color: '#ef4444' }}>${Number(w.amount || 0).toFixed(2)}</td>
+                  <td style={{ fontSize: 9 }}>{(w.wallet || '-').slice(0, 14)}...</td>
+                  <td style={{ fontSize: 11, opacity: 0.5 }}>{w.createdAt ? new Date(toMs(w.createdAt)).toLocaleDateString() : '-'}</td>
                 </tr>
               ))}
             </Table>
@@ -146,83 +159,78 @@ export default function AdminStatsPage() {
         </Section>
       </div>
 
-      <div className="grid grid-cols-2 gap-5 mb-5 max-md:grid-cols-1">
-        {/* Ranks */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
         <Section title="Rank Holders">
-          <div className="flex h-7 rounded-[14px] overflow-hidden bg-white/[0.03] mb-2.5">
+          <div style={{ display: 'flex', height: 28, borderRadius: 14, overflow: 'hidden', background: 'rgba(255,255,255,0.03)', marginBottom: 10 }}>
             {RANKS.filter((r) => rankCount[r]).map((r) => {
               const pct = (rankCount[r] / rankTotal) * 100;
-              return <div key={r} className="flex items-center justify-center text-[9px] font-bold text-black min-w-0 overflow-hidden" style={{ width: `${pct}%`, background: RANK_COLORS[RANKS.indexOf(r)] }}>{pct > 5 ? rankCount[r] : ''}</div>;
+              return <div key={r} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#000', minWidth: 0, overflow: 'hidden', width: `${pct}%`, background: RANK_COLORS[RANKS.indexOf(r)] }}>{pct > 5 ? rankCount[r] : ''}</div>;
             })}
-            {unranked > 0 && <div className="flex items-center justify-center text-[9px] font-bold min-w-0 overflow-hidden text-white/50" style={{ width: `${(unranked / rankTotal) * 100}%`, background: 'rgba(255,255,255,0.1)' }}>{(unranked / rankTotal) * 100 > 5 ? unranked : ''}</div>}
+            {unranked > 0 && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, minWidth: 0, overflow: 'hidden', color: 'rgba(255,255,255,0.5)', width: `${(unranked / rankTotal) * 100}%`, background: 'rgba(255,255,255,0.1)' }}>{(unranked / rankTotal) * 100 > 5 ? unranked : ''}</div>}
           </div>
           <Table headers={['Rank', 'Count', '%', 'Bar']}>
             {RANKS.filter((r) => rankCount[r]).map((r) => {
               const pct = ((rankCount[r] / rankTotal) * 100).toFixed(1);
               const color = RANK_COLORS[RANKS.indexOf(r)];
-              return <tr key={r}><td className="font-bold" style={{ color }}>{r}</td><td className="font-extrabold">{rankCount[r]}</td><td className="opacity-50">{pct}%</td><td><div className="h-2 rounded-sm" style={{ background: color, width: `${pct}%`, maxWidth: 120 }} /></td></tr>;
+              return <tr key={r}><td style={{ fontWeight: 700, color }}>{r}</td><td style={{ fontWeight: 800 }}>{rankCount[r]}</td><td style={{ opacity: 0.5 }}>{pct}%</td><td><div style={{ height: 8, borderRadius: 2, background: color, width: `${pct}%`, maxWidth: 120 }} /></td></tr>;
             })}
           </Table>
         </Section>
-
-        {/* Package Sales */}
         <Section title="Package Sales">
-          <div className="text-[24px] font-extrabold mb-2.5">{totalSold} <span className="text-sm font-normal opacity-50">packages sold</span></div>
-          <div className="text-lg font-bold text-green-500 mb-4">${(u.totalPackageSales || 0).toFixed(2)} <span className="text-xs font-normal opacity-50">total revenue</span></div>
+          <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 10 }}>{totalSold} <span style={{ fontSize: 14, fontWeight: 400, opacity: 0.5 }}>packages sold</span></div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#22c55e', marginBottom: 16 }}>${(u.totalPackageSales || 0).toFixed(2)} <span style={{ fontSize: 12, fontWeight: 400, opacity: 0.5 }}>total revenue</span></div>
           <Table headers={['Package', 'Sold', 'Revenue', '%']}>
             {PKG_LIST.map((p) => {
               const count = pkgSales.find((x) => x.name === p)?.count || 0;
               const rev = pkgSales.find((x) => x.name === p)?.revenue || 0;
               if (count === 0) return null;
               const pct = ((count / totalSold) * 100).toFixed(1);
-              return <tr key={p}><td className="font-bold">{PKG_NAMES[p]}</td><td className="font-extrabold">{count}</td><td className="text-green-500 font-bold">${rev.toFixed(2)}</td><td className="opacity-50">{pct}%</td></tr>;
+              return <tr key={p}><td style={{ fontWeight: 700 }}>{PKG_NAMES[p]}</td><td style={{ fontWeight: 800 }}>{count}</td><td style={{ color: '#22c55e', fontWeight: 700 }}>${rev.toFixed(2)}</td><td style={{ opacity: 0.5 }}>{pct}%</td></tr>;
             })}
           </Table>
         </Section>
       </div>
 
-      {/* Daily Activity */}
       <Section title="Today's Activity">
-        <div className="grid grid-cols-4 gap-2.5 mb-0 max-md:grid-cols-2">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           {[
-            { label: 'Deposits Today', val: `$${(u.todayDeposits || 0).toFixed(2)}`, color: 'text-green-500' },
-            { label: 'Withdrawals Today', val: `$${(u.todayWithdrawals || 0).toFixed(2)}`, color: 'text-red-500' },
-            { label: 'Rewards Today', val: `$${(u.todayRewards || 0).toFixed(2)}`, color: 'text-yellow-500' },
-            { label: 'New Today', val: String(u.todayRegistrations || 0), color: 'text-[var(--secondary)]' },
+            { label: 'Deposits Today', val: `$${(u.todayDeposits || 0).toFixed(2)}`, color: '#22c55e' },
+            { label: 'Withdrawals Today', val: `$${(u.todayWithdrawals || 0).toFixed(2)}`, color: '#ef4444' },
+            { label: 'Rewards Today', val: `$${(u.todayRewards || 0).toFixed(2)}`, color: '#eab308' },
+            { label: 'New Today', val: String(u.todayRegistrations || 0), color: '#60a5fa' },
           ].map((d) => (
-            <div key={d.label} className="bg-white/[0.04] border border-white/[0.1] rounded-2xl p-3.5">
-              <div className="text-[11px] text-white/50 uppercase tracking-wider mb-1">{d.label}</div>
-              <div className={`font-[family-name:var(--font-space-grotesk)] text-[22px] font-extrabold ${d.color}`}>{d.val}</div>
+            <div key={d.label} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 14 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 4 }}>{d.label}</div>
+              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 800, color: d.color }}>{d.val}</div>
             </div>
           ))}
         </div>
       </Section>
 
-      <div className="grid grid-cols-2 gap-5 mb-5 max-md:grid-cols-1">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
         <Section title="Recent Leadership Rewards">
           {(u.recentRewards || []).length === 0 ? <Empty /> : (
             <Table headers={['User', 'Rank', 'Day', 'Amount', 'Date']}>
               {(u.recentRewards || []).slice(0, 10).map((r, i) => (
                 <tr key={i}>
                   <td>{r.uid?.slice(0, 8) || '-'}</td>
-                  <td><span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[var(--primary)]/15 text-[var(--primary)]">{r.rank || '-'}</span></td>
+                  <td><span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: 'rgba(167,139,250,0.15)', color: '#a78bfa' }}>{r.rank || '-'}</span></td>
                   <td>{r.id?.slice(-1) || '-'}</td>
-                  <td className="font-bold text-yellow-500">${Number(r.amount || 0).toFixed(2)}</td>
-                  <td className="text-[11px] opacity-50">{r.createdAt ? new Date(toMs(r.createdAt)).toLocaleDateString() : '-'}</td>
+                  <td style={{ fontWeight: 700, color: '#eab308' }}>${Number(r.amount || 0).toFixed(2)}</td>
+                  <td style={{ fontSize: 11, opacity: 0.5 }}>{r.createdAt ? new Date(toMs(r.createdAt)).toLocaleDateString() : '-'}</td>
                 </tr>
               ))}
             </Table>
           )}
         </Section>
-
         <Section title="Top Depositors">
           {(u.topDepositors || []).length === 0 ? <Empty /> : (
             <Table headers={['#', 'User', 'Total Deposited']}>
               {(u.topDepositors || []).map((d, i) => (
                 <tr key={i}>
-                  <td className="font-extrabold" style={{ color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'var(--success)' }}>#{i + 1}</td>
+                  <td style={{ fontWeight: 800, color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#22c55e' }}>#{i + 1}</td>
                   <td>{d.name || d.uid?.slice(0, 8)}</td>
-                  <td className="font-bold text-green-500">${Number(d.amount || 0).toFixed(2)}</td>
+                  <td style={{ fontWeight: 700, color: '#22c55e' }}>${Number(d.amount || 0).toFixed(2)}</td>
                 </tr>
               ))}
             </Table>
@@ -230,8 +238,7 @@ export default function AdminStatsPage() {
         </Section>
       </div>
 
-      <div className="grid grid-cols-2 gap-5 mb-5 max-md:grid-cols-1">
-        {/* Commission Leaderboard */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
         <Section title="Commission Leaderboard">
           {(() => {
             const list = (u.users || []).filter((us) => (us.commissionBalance || 0) > 0).sort((a, b) => (b.commissionBalance || 0) - (a.commissionBalance || 0)).slice(0, 10);
@@ -240,45 +247,42 @@ export default function AdminStatsPage() {
               <Table headers={['#', 'User', 'Commission', 'Rank']}>
                 {list.map((us, i) => (
                   <tr key={i}>
-                    <td className="font-extrabold" style={{ color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'var(--primary)' }}>#{i + 1}</td>
+                    <td style={{ fontWeight: 800, color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#a78bfa' }}>#{i + 1}</td>
                     <td>{us.name || us.uid?.slice(0, 8)}</td>
-                    <td className="font-bold text-green-500">${Number(us.commissionBalance || 0).toFixed(2)}</td>
-                    <td><span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[var(--primary)]/15 text-[var(--primary)]">{us.rank || 'Unranked'}</span></td>
+                    <td style={{ fontWeight: 700, color: '#22c55e' }}>${Number(us.commissionBalance || 0).toFixed(2)}</td>
+                    <td><span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: 'rgba(167,139,250,0.15)', color: '#a78bfa' }}>{us.rank || 'Unranked'}</span></td>
                   </tr>
                 ))}
               </Table>
             );
           })()}
         </Section>
-
-        {/* Mining Overview */}
         <Section title="Mining Overview">
-          <div className="grid grid-cols-2 gap-2.5">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[
-              { label: 'Total ONC in System', val: totalOnc.toFixed(2), color: 'text-yellow-500' },
-              { label: 'Claimed Today', val: String(claimedToday), color: 'text-green-500' },
-              { label: 'Longest Streak', val: `${longestStreak} days`, color: 'text-[var(--primary)]' },
-              { label: 'Users with 7+ Streak', val: String(streakUsers), color: 'text-[var(--secondary)]' },
+              { label: 'Total ONC in System', val: totalOnc.toFixed(2), color: '#eab308' },
+              { label: 'Claimed Today', val: String(claimedToday), color: '#22c55e' },
+              { label: 'Longest Streak', val: `${longestStreak} days`, color: '#a78bfa' },
+              { label: 'Users with 7+ Streak', val: String(streakUsers), color: '#60a5fa' },
             ].map((d) => (
-              <div key={d.label} className="bg-white/[0.04] border border-white/[0.1] rounded-2xl p-3.5">
-                <div className="text-[11px] text-white/50 uppercase tracking-wider mb-1">{d.label}</div>
-                <div className={`font-[family-name:var(--font-space-grotesk)] text-[22px] font-extrabold ${d.color}`}>{d.val}</div>
+              <div key={d.label} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 14 }}>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 4 }}>{d.label}</div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 800, color: d.color }}>{d.val}</div>
               </div>
             ))}
           </div>
         </Section>
       </div>
 
-      {/* Top Withdrawers */}
       <Section title="Top Withdrawers">
         {(u.topWithdrawers || []).length === 0 ? <Empty /> : (
           <Table headers={['#', 'User', 'Total Withdrawn', 'Count']}>
             {(u.topWithdrawers || []).map((w, i) => (
               <tr key={i}>
-                <td className="font-extrabold" style={{ color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'var(--red)' }}>#{i + 1}</td>
+                <td style={{ fontWeight: 800, color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#ef4444' }}>#{i + 1}</td>
                 <td>{w.name || w.uid?.slice(0, 8)}</td>
-                <td className="font-bold text-red-500">${Number(w.amount || 0).toFixed(2)}</td>
-                <td className="opacity-50">{w.count || 0}x</td>
+                <td style={{ fontWeight: 700, color: '#ef4444' }}>${Number(w.amount || 0).toFixed(2)}</td>
+                <td style={{ opacity: 0.5 }}>{w.count || 0}x</td>
               </tr>
             ))}
           </Table>
@@ -286,26 +290,4 @@ export default function AdminStatsPage() {
       </Section>
     </div>
   );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white/[0.04] border border-white/[0.1] rounded-[18px] p-5 mb-5">
-      <div className="font-[family-name:var(--font-space-grotesk)] text-base font-bold mb-3.5 flex items-center gap-2">{title}</div>
-      {children}
-    </div>
-  );
-}
-
-function Table({ headers, children }: { headers: string[]; children: React.ReactNode }) {
-  return (
-    <table className="w-full border-collapse text-[13px]">
-      <thead><tr>{headers.map((h) => <th key={h} className="text-left py-2.5 px-2 text-white/50 font-semibold text-[10px] uppercase tracking-wider border-b border-white/[0.1]">{h}</th>)}</tr></thead>
-      <tbody>{children}</tbody>
-    </table>
-  );
-}
-
-function Empty() {
-  return <em className="opacity-30 text-sm">Loading...</em>;
 }

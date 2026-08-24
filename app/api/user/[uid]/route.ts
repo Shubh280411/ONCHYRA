@@ -41,12 +41,21 @@ export async function GET(
     }
 
     return NextResponse.json({
+      uid,
+      name: u.name || 'Validator',
+      email: u.email || '',
       referralCode: refCode,
+      referredBy: u.referred_by || '',
+      balance: Number(u.balance) || 0,
+      walletBalance: Number(u.wallet_balance) || 0,
+      streak: Number(u.streak) || 0,
+      activePackage: u.active_package || null,
+      packageStatus: u.package_status || 'none',
+      createdAt: Number(u.created_at) || 0,
       refLevel1,
       refLevel2,
       refLevel3,
       totalCommissions,
-      walletBalance: Number(u.wallet_balance) || 0,
       totalDirects: Number(u.total_directs) || 0,
       activeDirects: Number(u.active_directs) || 0,
       teamBiz: Number(u.team_biz) || 0,
@@ -58,6 +67,34 @@ export async function GET(
           : u.purchased_packages
         : [],
     });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ uid: string }> }
+) {
+  try {
+    const { uid } = await params;
+    const body = await request.json();
+    const updates: Record<string, unknown> = {};
+    if (body.name !== undefined) updates.name = body.name;
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
+    const { set: dbSet } = await import('@/lib/db');
+    const existing = await get('users', uid);
+    if (!existing) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+    await dbSet('users', uid, { ...existing, ...updates });
+
+    return NextResponse.json({ success: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message }, { status: 500 });
