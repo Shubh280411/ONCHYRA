@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, query, increment, getClient, update } from '@/lib/db';
+import { get, query, increment, update, set } from '@/lib/db';
 
 const PACKAGES: Record<string, { price: number; boost: number; cap: number; name: string }> = {
   starter:  { price: 5,   boost: 4,   cap: 50,   name: 'Starter' },
@@ -167,49 +167,36 @@ export async function POST(request: NextRequest) {
 
     await ensurePromoColumn();
 
-    const client = await getClient();
-    if (!client) {
-      return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+    const freshUser = await get('users', uid);
+    const freshBalance = Number(freshUser?.wallet_balance || 0);
+    if (freshBalance < finalPrice) {
+      return NextResponse.json({ error: 'Insufficient wallet balance' }, { status: 400 });
     }
-    try {
-      await client.query('BEGIN');
-      const lockRes = await client.query(
-        'SELECT wallet_balance FROM users WHERE uid = $1 FOR UPDATE', [uid]
-      );
-      const freshBalance = Number(lockRes.rows[0]?.wallet_balance || 0);
-      if (freshBalance < finalPrice) {
-        await client.query('ROLLBACK');
-        return NextResponse.json({ error: 'Insufficient wallet balance' }, { status: 400 });
-      }
 
-      await client.query(
-        'UPDATE users SET wallet_balance = wallet_balance - $1 WHERE uid = $2',
-        [finalPrice, uid]
-      );
-      await client.query(
-        `UPDATE users SET
-          active_package = $1, package_amount = $2, package_boost = $3,
-          package_cap = $4, package_usage = 0, package_status = 'active',
-          package_purchased_at = $5
-        WHERE uid = $6`,
-        [packageId, pkgPrice, pkg.boost, prevCap + pkg.cap, Date.now(), uid]
-      );
-      await client.query(
-        'UPDATE users SET total_package_spend = COALESCE(total_package_spend, 0) + $1 WHERE uid = $2',
-        [pkgPrice, uid]
-      );
-      await client.query(
-        `INSERT INTO package_purchases (id, uid, package_id, name, amount, paid, credit, boost, promo_applied, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        ['pp_' + uid + '_' + Date.now(), uid, packageId, pkg.name, pkgPrice, finalPrice, credit, pkg.boost, promoApplied, Date.now()]
-      );
-      await client.query('COMMIT');
-    } catch (txErr) {
-      await client.query('ROLLBACK').catch(() => {});
-      throw txErr;
-    } finally {
-      try { client.release(); } catch { /* ignore */ }
-    }
+    await update('users', uid, {
+      wallet_balance: freshBalance - finalPrice,
+      active_package: packageId,
+      package_amount: pkgPrice,
+      package_boost: pkg.boost,
+      package_cap: prevCap + pkg.cap,
+      package_usage: 0,
+      package_status: 'active',
+      package_purchased_at: Date.now(),
+      total_package_spend: (Number(user.total_package_spend || 0)) + pkgPrice,
+    });
+
+    await set('package_purchases', 'pp_' + uid + '_' + Date.now(), {
+      id: 'pp_' + uid + '_' + Date.now(),
+      uid,
+      package_id: packageId,
+      name: pkg.name,
+      amount: pkgPrice,
+      paid: finalPrice,
+      credit,
+      boost: pkg.boost,
+      promo_applied: promoApplied,
+      created_at: Date.now(),
+    });
 
     await processReferralCommission(uid, pkgPrice, pkg.name);
 
