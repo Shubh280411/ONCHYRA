@@ -267,7 +267,14 @@ export async function findWhere(
 ): Promise<Record<string, unknown>[]> {
   const params: Record<string, string> = {};
   for (const [k, v] of Object.entries(conditions)) {
-    if (v !== undefined && v !== null) params[k] = 'eq.' + String(v);
+    if (v !== undefined && v !== null) {
+      const sv = String(v);
+      if (sv.startsWith('gt.') || sv.startsWith('lt.') || sv.startsWith('gte.') || sv.startsWith('lte.') || sv.startsWith('neq.') || sv.startsWith('eq.')) {
+        params[k] = sv;
+      } else {
+        params[k] = 'eq.' + sv;
+      }
+    }
   }
   if (orderByCol) params.order = orderByCol + '.desc';
   if (limitVal) params.limit = String(limitVal);

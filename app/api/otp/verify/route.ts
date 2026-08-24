@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, update, set } from '@/lib/db';
 import { getOtpEntry, deleteOtpEntry } from '@/lib/otpStore';
 
 async function verifyOtp(email: string, otp: string): Promise<{ valid: boolean; error?: string }> {
@@ -15,17 +15,12 @@ async function verifyOtp(email: string, otp: string): Promise<{ valid: boolean; 
           deleteOtpEntry(key);
           return { valid: false, error: 'OTP expired. Request a new one.' };
         }
-        const attempts = ((row.attempts as number) || 0) + 1;
+        const attempts = (Number(row.attempts) || 0) + 1;
         if (row.otp !== otp) {
           if (attempts >= 5) deleteOtpEntry(key);
           return { valid: false, error: 'Invalid OTP' };
         }
-        query(`UPDATE otp_store SET verified = true, attempts = $1 WHERE email = $2`, [attempts, key]).catch(() => {});
-        query(
-          `INSERT INTO otp_logs (id, email, purpose, event, created_at)
-           VALUES ('otp_verified_' || $1 || '_' || $2, $1, $3, 'verified', $4)`,
-          [key, Date.now(), row.purpose || 'registration', Date.now()]
-        ).catch(() => {});
+        update('otp_store', key, { verified: true, attempts }, 'email').catch(() => {});
         return { valid: true };
       }
     } catch {
@@ -47,12 +42,7 @@ async function verifyOtp(email: string, otp: string): Promise<{ valid: boolean; 
   }
 
   entry.verified = true;
-  query(`UPDATE otp_store SET verified = true, attempts = $1 WHERE email = $2`, [entry.attempts, key]).catch(() => {});
-  query(
-    `INSERT INTO otp_logs (id, email, purpose, event, created_at)
-     VALUES ('otp_verified_' || $1 || '_' || $2, $1, $3, 'verified', $4)`,
-    [key, Date.now(), entry.purpose || 'registration', Date.now()]
-  ).catch(() => {});
+  update('otp_store', key, { verified: true, attempts: entry.attempts }, 'email').catch(() => {});
   return { valid: true };
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, findWhere, increment, update } from '@/lib/db';
+import { findWhere, increment, update, set } from '@/lib/db';
 import { getPrice } from '@/lib/priceFetcher';
 
 export async function POST(request: NextRequest) {
@@ -30,12 +30,19 @@ export async function POST(request: NextRequest) {
       usdAmount = rawAmount * (polPrice || 0);
     }
 
-    await query(
-      `INSERT INTO deposits (id, uid, address, network, amount, tx_hash, status, pol_amount, pol_price, confirmed_at, created_at)
-       VALUES ('dep_' || $1 || '_' || $2, $1, $3, $4, $5, $6, 'completed', $7, $8, $9, $9)`,
-      [wallet.uid, txHash.slice(0, 8), address, network, usdAmount, txHash,
-       network === 'Polygon' ? rawAmount : 0, polPrice, Date.now()]
-    );
+    const depId = 'dep_' + (wallet.uid as string).slice(0, 8) + '_' + txHash.slice(0, 8);
+    await set('deposits', depId, {
+      uid: wallet.uid,
+      address,
+      network,
+      amount: usdAmount,
+      tx_hash: txHash,
+      status: 'completed',
+      pol_amount: network === 'Polygon' ? rawAmount : 0,
+      pol_price: polPrice,
+      confirmed_at: Date.now(),
+      created_at: Date.now(),
+    });
 
     await increment('users', wallet.uid as string, 'wallet_balance', usdAmount);
     await increment('users', wallet.uid as string, 'total_deposits', usdAmount);

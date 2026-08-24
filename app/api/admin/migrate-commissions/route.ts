@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get, findWhere, increment, incrementMulti } from '@/lib/db';
+import { get, all, findWhere, increment, incrementMulti, set } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -19,17 +19,11 @@ export async function POST(request: NextRequest) {
     const fixBizOnly = searchParams.get('fixBizOnly') === 'true';
     const cutoff = days > 0 ? Date.now() - days * 86400000 : 0;
 
-    const usersRes = await query(`SELECT * FROM users`);
-    const allUsers = usersRes.rows;
-    let buyers = allUsers.filter((u: Record<string, unknown>) =>
-      (u.package_amount as number || 0) > 0 || (u.total_package_spend as number || 0) > 0
-    );
-    if (cutoff > 0) buyers = buyers.filter((u: Record<string, unknown>) =>
-      (u.package_purchased_at as number || 0) >= cutoff
-    );
+    const allUsers = await all('users');
+    let buyers = allUsers.filter(u => Number(u.package_amount || 0) > 0 || Number(u.total_package_spend || 0) > 0);
+    if (cutoff > 0) buyers = buyers.filter(u => Number(u.package_purchased_at || 0) >= cutoff);
 
     let processed = 0, noReferrer = 0, noUplinePackage = 0, results: string[] = [], errors: string[] = [];
-
     const levels = [
       { level: 1, pct: 0.10 },
       { level: 2, pct: 0.05 },
@@ -41,7 +35,7 @@ export async function POST(request: NextRequest) {
         let currentRefCode = buyer.referred_by as string | null;
         if (!currentRefCode) { noReferrer++; continue; }
 
-        const pkgAmount = (buyer.package_amount as number) || (buyer.total_package_spend as number) || 0;
+        const pkgAmount = Number(buyer.package_amount || buyer.total_package_spend) || 0;
         let levelResults: string[] = [];
 
         for (const lv of levels) {
@@ -51,28 +45,24 @@ export async function POST(request: NextRequest) {
 
           const refUid = refRows[0].uid as string;
           const refData = refRows[0];
-
           currentRefCode = refData.referred_by as string | null;
-
           await increment('users', refUid, 'team_biz', pkgAmount);
 
           if (!fixBizOnly && refData.active_package && refData.active_package !== 'none') {
             const commission = pkgAmount * lv.pct;
-            const used = (refData.package_usage as number) || 0;
-            const cap = (refData.package_cap as number) || 999999;
+            const used = Number(refData.package_usage) || 0;
+            const cap = Number(refData.package_cap) || 999999;
             const available = Math.max(0, cap - used);
             const capped = Math.min(commission, available);
             if (capped > 0) {
               await incrementMulti('users', refUid, {
-                commission_balance: capped,
-                package_usage: capped,
-                total_commissions: capped,
+                commission_balance: capped, package_usage: capped, total_commissions: capped,
               });
-              await query(
-                `INSERT INTO commissions (id, from_uid, uid, amount, level, type, package_name, from_name, created_at)
-                 VALUES ($1, $2, $3, $4, $5, 'package_commission', $6, $7, $8)`,
-                ['adm_' + refUid + '_' + buyer.uid + '_' + Date.now(), buyer.uid, refUid, capped, lv.level, buyer.active_package || 'Package', buyer.name || 'User', Date.now()]
-              );
+              await set('commissions', 'adm_' + refUid + '_' + buyer.uid + '_' + Date.now(), {
+                from_uid: buyer.uid, uid: refUid, amount: capped, level: lv.level,
+                type: 'package_commission', package_name: buyer.active_package || 'Package',
+                from_name: (buyer.name as string) || 'User', created_at: Date.now(),
+              });
               levelResults.push(`${lv.level}: $${capped.toFixed(2)} to ${refData.name || refUid}`);
             }
           }

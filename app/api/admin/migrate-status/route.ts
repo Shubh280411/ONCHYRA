@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, update, get } from '@/lib/db';
+import { get, update, all } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -14,11 +14,13 @@ export async function POST(request: NextRequest) {
     const authErr = await requireAdmin(request);
     if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
-    const rows = await query(`SELECT uid, status FROM users WHERE status IS NULL OR status = ''`);
+    const rows = await all('users');
     let count = 0;
-    for (const r of rows.rows) {
-      await update('users', r.uid as string, { status: 'active' });
-      count++;
+    for (const r of rows) {
+      if (!r.status || r.status === '') {
+        await update('users', r.uid as string, { status: 'active' });
+        count++;
+      }
     }
     return NextResponse.json({ success: true, message: `${count} users updated with status: active` });
   } catch (err: unknown) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { findWhere } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,12 +8,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'uid required' }, { status: 400 });
     }
 
-    const result = await query(
-      `SELECT * FROM claims WHERE user_id = $1 ORDER BY created_at DESC LIMIT 30`,
-      [uid]
-    );
-
-    return NextResponse.json({ claims: result.rows });
+    const claims = await findWhere('claims', { user_id: uid }, 'created_at', 30);
+    return NextResponse.json({ claims });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message }, { status: 500 });

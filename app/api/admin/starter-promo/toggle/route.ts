@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, set } from '@/lib/db';
 
 const ORIGINAL_STARTER_PRICE = 5;
 const STARTER_PROMO_PRICE = 2.50;
@@ -27,11 +27,7 @@ export async function POST(request: NextRequest) {
       promoPrice: STARTER_PROMO_PRICE,
       discountPct: 50,
     };
-    await query(
-      `INSERT INTO settings (key, value) VALUES ('starterPromo', $1::jsonb)
-       ON CONFLICT (key) DO UPDATE SET value = $1::jsonb`,
-      [JSON.stringify(config)]
-    );
+    await set('settings', 'starterPromo', { value: config }, 'key');
     return NextResponse.json({ success: true, config });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

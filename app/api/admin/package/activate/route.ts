@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { update, increment, get, query } from '@/lib/db';
+import { update, increment, get, set, findWhere } from '@/lib/db';
 
 const PACKAGES: Record<string, { price: number; boost: number; cap: number; name: string }> = {
   starter:  { price: 5,   boost: 4,   cap: 50,   name: 'Starter' },
@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
     });
     await increment('users', uid, 'total_package_spend', pkg.price);
 
-    // Inline referral commission processing
     const user = await get('users', uid);
     if (user && user.referred_by) {
       const levels = [
@@ -50,12 +49,9 @@ export async function POST(request: NextRequest) {
       let currentRefCode = user.referred_by as string;
       for (const lv of levels) {
         if (!currentRefCode) break;
-        const refRows = await query(
-          `SELECT * FROM "users" WHERE UPPER("referral_code") = $1`,
-          [currentRefCode.toUpperCase()]
-        );
-        if (!refRows.rows.length) break;
-        const refData = refRows.rows[0];
+        const refRows = await findWhere('users', { referral_code: currentRefCode.toUpperCase() });
+        if (!refRows.length) break;
+        const refData = refRows[0];
         const refUid = refData.uid as string;
         currentRefCode = refData.referred_by as string;
 
@@ -64,8 +60,8 @@ export async function POST(request: NextRequest) {
         if (!refData.active_package || refData.active_package === 'none' || refData.package_status === 'expired') continue;
 
         const commission = pkg.price * lv.pct;
-        const used = (refData.package_usage as number) || 0;
-        const cap = (refData.package_cap as number) || Infinity;
+        const used = Number(refData.package_usage) || 0;
+        const cap = Number(refData.package_cap) || Infinity;
         const available = Math.max(0, cap - used);
         const capped = Math.min(commission, available);
         if (capped <= 0) continue;
@@ -78,12 +74,17 @@ export async function POST(request: NextRequest) {
           await update('users', refUid, { package_status: 'expired' });
         }
 
-        await query(
-          `INSERT INTO commissions (id, from_uid, uid, amount, level, type, package_name, from_name, created_at)
-           VALUES ($1, $2, $3, $4, $5, 'package_commission', $6, $7, $8)`,
-          ['comm_' + refUid + '_' + uid + '_' + Date.now(), uid, refUid, capped, lv.level,
-           pkg.name, (user.name as string) || 'User', Date.now()]
-        );
+        const commId = 'comm_' + refUid + '_' + uid + '_' + Date.now();
+        await set('commissions', commId, {
+          from_uid: uid,
+          uid: refUid,
+          amount: capped,
+          level: lv.level,
+          type: 'package_commission',
+          package_name: pkg.name,
+          from_name: (user.name as string) || 'User',
+          created_at: Date.now(),
+        });
       }
     }
 

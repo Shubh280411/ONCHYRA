@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, all } from '@/lib/db';
 import { cc } from '@/lib/utils';
 
 async function requireAdmin(request: NextRequest) {
@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
     if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
     const rankNames = ['Ignition','Momentum','Velocity','Quantum','Fusion','Infinity','Titan','Apex','Zenith','Legacy'];
-    const rows = await query(`SELECT * FROM users LIMIT 500`);
-    const users = rows.rows
+    const rows = await all('users', null, 500);
+    const users = rows
       .map(cc)
       .filter((u) => {
         const rec = u as Record<string, unknown>;

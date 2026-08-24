@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, findWhere, update, remove } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -21,16 +21,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing depositId or uid' }, { status: 400 });
     }
 
-    const dep = await query("SELECT amount FROM deposits WHERE id=$1 AND uid=$2", [depositId, uid]);
-    if (!dep.rows.length) {
+    const deps = await findWhere('deposits', { id: depositId, uid });
+    if (!deps.length) {
       return NextResponse.json({ error: 'Deposit not found' }, { status: 404 });
     }
 
-    const amt = parseFloat(dep.rows[0].amount as string) || 0;
+    const amt = parseFloat(String(deps[0].amount)) || 0;
     if (amt !== 0) {
-      await query("UPDATE users SET wallet_balance = COALESCE(wallet_balance, 0) - $1 WHERE uid = $2", [amt.toFixed(2), uid]);
+      const user = await get('users', uid);
+      if (user) {
+        await update('users', uid, {
+          wallet_balance: (Number(user.wallet_balance) || 0) - amt,
+        });
+      }
     }
-    await query("DELETE FROM deposits WHERE id=$1", [depositId]);
+    await remove('deposits', depositId, 'id');
     console.log(`[MANUAL DELETE] ${depositId}: reversed $${amt} from ${uid}`);
     return NextResponse.json({ success: true, deleted: depositId, reversedAmount: amt });
   } catch (e: unknown) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, update, all } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -16,15 +16,15 @@ export async function POST(request: NextRequest) {
 
     const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
     const now = Date.now();
-    const rows = await query(`SELECT uid, last_claim, role FROM users`);
+    const rows = await all('users');
     let active = 0, inactive = 0, skipped = 0, total = 0;
-    for (const u of rows.rows) {
+    for (const u of rows) {
       total++;
       if (u.role === 'admin') { skipped++; continue; }
-      const lastClaim = u.last_claim || 0;
+      const lastClaim = Number(u.last_claim || u.lastclaim) || 0;
       const claimedRecently = lastClaim > 0 && (now - lastClaim) < SEVEN_DAYS;
       if (claimedRecently) active++; else inactive++;
-      await query(`UPDATE users SET status = $1 WHERE uid = $2`, [claimedRecently ? 'active' : 'inactive', u.uid]);
+      await update('users', u.uid as string, { status: claimedRecently ? 'active' : 'inactive' });
     }
     return NextResponse.json({ success: true, total, active, inactive, skipped });
   } catch (e: unknown) {

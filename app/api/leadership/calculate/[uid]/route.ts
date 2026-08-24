@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, findWhere, increment, update, query } from '@/lib/db';
+import { get, findWhere, increment, update, set } from '@/lib/db';
 
 const RANKS = [
   { name: 'Ignition', reqDirect: 3, reqTeam: 1000, reqLeg: 500, bonus: 25, rewardDay: 5, rewardDays: 5 },
@@ -15,10 +15,7 @@ const RANKS = [
 ];
 
 const RANK_INDEX: Record<string, number> = RANKS.reduce(
-  (m, r, i) => {
-    m[r.name] = i;
-    return m;
-  },
+  (m, r, i) => { m[r.name] = i; return m; },
   {} as Record<string, number>
 );
 
@@ -27,7 +24,7 @@ async function getDownlineVolume(refCode: string, depth = 0, maxDepth = 10): Pro
   const rows = await findWhere('users', { referred_by: refCode });
   let vol = 0;
   for (const u of rows) {
-    vol += (u.total_package_spend as number) || 0;
+    vol += Number(u.total_package_spend) || 0;
     vol += await getDownlineVolume(u.referral_code as string, depth + 1, maxDepth);
   }
   return vol;
@@ -39,7 +36,7 @@ async function getLegsVolume(refCode: string): Promise<number[]> {
   const legs: number[] = [];
   for (const u of rows) {
     const subVol = await getDownlineVolume(u.referral_code as string);
-    legs.push(((u.total_package_spend as number) || 0) + subVol);
+    legs.push((Number(u.total_package_spend) || 0) + subVol);
   }
   legs.sort((a, b) => b - a);
   return legs;
@@ -99,11 +96,13 @@ export async function GET(
       if (r && r.bonus > 0) {
         await increment('users', uid, 'commission_balance', r.bonus);
         await update('users', uid, { achievement_bonus_claimed: true });
-        await query(
-          `INSERT INTO achievement_bonuses (id, uid, rank, amount, type, created_at)
-           VALUES ($1, $2, $3, $4, 'achievement', $5)`,
-          ['ab_' + uid + '_' + Date.now(), uid, rankAchieved, r.bonus, Date.now()]
-        );
+        await set('achievement_bonuses', 'ab_' + uid + '_' + Date.now(), {
+          uid,
+          rank: rankAchieved,
+          amount: r.bonus,
+          type: 'achievement',
+          created_at: Date.now(),
+        });
       }
     }
 

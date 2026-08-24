@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, all, remove } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -9,41 +9,35 @@ async function requireAdmin(request: NextRequest) {
   return null;
 }
 
-const DEPOSIT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
-const OTP_RETENTION_MS = 24 * 60 * 60 * 1000;
-const NOTIF_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
-const AUDIT_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
-
 export async function POST(request: NextRequest) {
   try {
     const authErr = await requireAdmin(request);
     if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
-    const cutoffDeposit = Date.now() - DEPOSIT_RETENTION_MS;
-    await query(`DELETE FROM deposits WHERE created_at < $1 AND status = 'completed'`, [cutoffDeposit]);
+    const cutoffDeposit = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const deposits = await all('deposits');
+    const oldDeposits = deposits.filter(d => d.status === 'completed' && Number(d.created_at) < cutoffDeposit);
+    for (const d of oldDeposits) {
+      await remove('deposits', d.id as string, 'id');
+    }
 
-    const FIFTEEN_DAYS = 15 * 86400000;
-    await query(
-      `DELETE FROM deposit_wallets WHERE expired = true AND expired_at < $1 AND used = false`,
-      [Date.now() - FIFTEEN_DAYS]
-    );
+    const cutoffOtp = Date.now() - 24 * 60 * 60 * 1000;
+    const otps = await all('otp_store');
+    for (const o of otps) {
+      if (Number(o.created_at) < cutoffOtp) {
+        await remove('otp_store', o.email as string, 'email');
+      }
+    }
 
-    const cutoffOtp = Date.now() - OTP_RETENTION_MS;
-    await query(`DELETE FROM otps WHERE created_at < $1`, [cutoffOtp]);
-    await query(`DELETE FROM otp_logs WHERE created_at < $1`, [cutoffOtp]);
-    await query(`DELETE FROM otp_store WHERE created_at < $1`, [cutoffOtp]);
+    const cutoffNotif = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const notis = await all('notifications');
+    for (const n of notis) {
+      if (Number(n.created_at) < cutoffNotif) {
+        await remove('notifications', n.id as string, 'id');
+      }
+    }
 
-    const cutoffNotif = Date.now() - NOTIF_RETENTION_MS;
-    await query(`DELETE FROM notifications WHERE created_at < $1`, [cutoffNotif]);
-
-    const cutoffAudit = Date.now() - AUDIT_RETENTION_MS;
-    await query(`DELETE FROM audit_logs WHERE created_at < $1`, [cutoffAudit]);
-
-    const sizeRes = await query(`SELECT pg_database_size(current_database()) AS total_bytes`);
-    const totalBytes = sizeRes.rows[0]?.total_bytes || 0;
-    const totalMB = (Number(totalBytes) / 1024 / 1024).toFixed(2);
-
-    return NextResponse.json({ totalMB, success: true });
+    return NextResponse.json({ success: true, deletedDeposits: oldDeposits.length });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message, success: false }, { status: 500 });

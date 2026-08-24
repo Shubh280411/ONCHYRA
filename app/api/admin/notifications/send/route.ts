@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, set } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -15,11 +15,16 @@ export async function POST(request: NextRequest) {
     if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
     const { userId, title, message, type, link } = await request.json();
-    await query(
-      `INSERT INTO notifications (user_id, title, message, type, link, read_by, created_at)
-       VALUES ($1, $2, $3, $4, $5, '[]'::jsonb, $6)`,
-      [userId || 'all', title, message, type || 'update', link || '', Date.now()]
-    );
+    const notiId = 'noti_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    await set('notifications', notiId, {
+      user_id: userId || 'all',
+      title,
+      message,
+      type: type || 'update',
+      link: link || '',
+      read_by: {},
+      created_at: Date.now(),
+    });
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

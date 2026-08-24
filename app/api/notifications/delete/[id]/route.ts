@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { remove } from '@/lib/db';
 
 export async function POST(
   _request: NextRequest,
@@ -7,7 +7,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    await query(`DELETE FROM notifications WHERE id = $1`, [id]);
+    await remove('notifications', id, 'id');
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

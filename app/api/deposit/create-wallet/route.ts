@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, set, update } from '@/lib/db';
 
 const MNEMONIC = process.env.HD_WALLET_SEED;
 if (!MNEMONIC) console.error('HD_WALLET_SEED not set in .env');
@@ -30,11 +30,9 @@ async function getNextIndex(): Promise<number> {
   }
   const next = memCounter!;
   memCounter = next + 1;
-  query(
-    `INSERT INTO settings (key, value) VALUES ('hdWalletCounter', $1::jsonb)
-     ON CONFLICT (key) DO UPDATE SET value = $1::jsonb`,
-    [JSON.stringify({ nextIndex: memCounter })]
-  ).catch(e => console.warn('[HD] Failed to persist counter:', e instanceof Error ? e.message : String(e)));
+  set('settings', 'hdWalletCounter', { nextIndex: memCounter }, 'key').catch(e =>
+    console.warn('[HD] Failed to persist counter:', e instanceof Error ? e.message : String(e))
+  );
   if (next < 1) return 1;
   return next;
 }
@@ -55,11 +53,16 @@ export async function POST(request: NextRequest) {
     const child = (node as InstanceType<typeof HDNodeWallet>).derivePath(path);
     const address = child.address.toLowerCase();
 
-    await query(
-      `INSERT INTO deposit_wallets (id, uid, network, address, path, "index", used, created_at)
-       VALUES ('dw_' || $1 || '_' || $2, $1, $3, $4, $5, $6, false, $7)`,
-      [uid, Date.now(), network, address, path, index, Date.now()]
-    );
+    const dwId = 'dw_' + uid.slice(0, 8) + '_' + Date.now();
+    await set('deposit_wallets', dwId, {
+      uid,
+      network,
+      address,
+      path,
+      index,
+      used: false,
+      created_at: Date.now(),
+    });
 
     console.log(`[HD] Generated address ${address} for uid=${uid} network=${network} index=${index}`);
     return NextResponse.json({ address, network, index });

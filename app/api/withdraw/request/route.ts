@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, increment, query, findWhere } from '@/lib/db';
+import { get, increment, set, update } from '@/lib/db';
 import { getOtpEntry, deleteOtpEntry } from '@/lib/otpStore';
 
 async function verifyOtp(email: string, otp: string): Promise<{ valid: boolean; error?: string }> {
@@ -8,8 +8,9 @@ async function verifyOtp(email: string, otp: string): Promise<{ valid: boolean; 
 
   if (!entry) {
     try {
-      const row = await get('otp_store', key, 'email');
-      if (row) {
+      const rows = await import('@/lib/db').then(m => m.findWhere('otp_store', { email: key }));
+      if (rows.length) {
+        const row = rows[0];
         if (row.verified) return { valid: false, error: 'OTP already verified' };
         if (Date.now() > (row.expires_at as number)) {
           deleteOtpEntry(key);
@@ -20,7 +21,7 @@ async function verifyOtp(email: string, otp: string): Promise<{ valid: boolean; 
           if (attempts >= 5) deleteOtpEntry(key);
           return { valid: false, error: 'Invalid OTP' };
         }
-        query(`UPDATE otp_store SET verified = true, attempts = $1 WHERE email = $2`, [attempts, key]).catch(() => {});
+        update('otp_store', key, { verified: true, attempts }, 'email').catch(() => {});
         return { valid: true };
       }
     } catch {
@@ -42,7 +43,7 @@ async function verifyOtp(email: string, otp: string): Promise<{ valid: boolean; 
   }
 
   entry.verified = true;
-  query(`UPDATE otp_store SET verified = true, attempts = $1 WHERE email = $2`, [entry.attempts, key]).catch(() => {});
+  update('otp_store', key, { verified: true, attempts: entry.attempts }, 'email').catch(() => {});
   return { valid: true };
 }
 
@@ -86,23 +87,28 @@ export async function POST(request: NextRequest) {
     await increment('users', uid, deductField, -amount);
 
     const wId = 'w_' + uid + '_' + Date.now();
-    await query(
-      `INSERT INTO withdrawals (id, uid, amount, fee, net_amount, wallet, network, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [wId, uid, amount, fee, net, wallet, network || 'BEP20', status, Date.now()]
-    );
+    await set('withdrawals', wId, {
+      uid,
+      amount,
+      fee,
+      net_amount: net,
+      wallet,
+      network: network || 'BEP20',
+      status,
+      created_at: Date.now(),
+    });
 
     const aId = 'audit_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-    await query(
-      `INSERT INTO audit_logs (id, type, uid, amount, fee, net, wallet, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [aId, 'withdrawal', uid, amount, fee, net, wallet, status, Date.now()]
-    );
-
-    if (isAuto) {
-      // Fire-and-forget auto-withdrawal (would need withdrawalWallet service in production)
-      // For now, just leave in 'processing' status
-    }
+    await set('audit_logs', aId, {
+      type: 'withdrawal',
+      uid,
+      amount,
+      fee,
+      net,
+      wallet,
+      status,
+      created_at: Date.now(),
+    });
 
     return NextResponse.json({ success: true, amount, fee, received: net, status, id: wId });
   } catch (e: unknown) {

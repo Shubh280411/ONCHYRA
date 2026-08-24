@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, all } from '@/lib/db';
 import { cc } from '@/lib/utils';
 
 async function requireAdmin(request: NextRequest) {
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const maxLimit = Math.min(parseInt(searchParams.get('limit') || '500'), 500);
-    const rows = await query(`SELECT * FROM users LIMIT $1`, [maxLimit]);
-    return NextResponse.json(rows.rows.map(cc));
+    const rows = await all('users', null, maxLimit);
+    return NextResponse.json(rows.map(cc));
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message }, { status: 500 });

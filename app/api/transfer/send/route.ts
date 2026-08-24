@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, increment, findWhere, query } from '@/lib/db';
+import { get, increment, findWhere, set } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,23 +36,20 @@ export async function POST(request: NextRequest) {
     await increment('users', fromUid, 'balance', -amount);
     await increment('users', receiver.uid as string, 'balance', net);
 
-    await query(
-      `INSERT INTO p2p_transfers (id, from_uid, to_uid, from_code, to_code, from_name, to_name, gross_amount, burn, net_amount, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'completed', $11)`,
-      [
-        'trf_' + fromUid + '_' + Date.now(),
-        fromUid,
-        receiver.uid,
-        sender.referral_code || '?',
-        (referralCode as string).toUpperCase(),
-        sender.name || '?',
-        receiver.name || '?',
-        amount,
-        burn,
-        net,
-        Date.now(),
-      ]
-    );
+    const trfId = 'trf_' + fromUid + '_' + Date.now();
+    await set('p2p_transfers', trfId, {
+      from_uid: fromUid,
+      to_uid: receiver.uid,
+      from_code: sender.referral_code || '?',
+      to_code: (referralCode as string).toUpperCase(),
+      from_name: sender.name || '?',
+      to_name: receiver.name || '?',
+      gross_amount: amount,
+      burn,
+      net_amount: net,
+      status: 'completed',
+      created_at: Date.now(),
+    });
 
     return NextResponse.json({ success: true, amount, burn, received: net });
   } catch (e: unknown) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, query } from '@/lib/db';
+import { get, set } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -17,11 +17,7 @@ export async function GET() {
     if (data.enabled && data.endAt && Date.now() > (data.endAt as number)) {
       data.enabled = false;
       data.autoDisabled = true;
-      await query(
-        `INSERT INTO settings (key, value) VALUES ('maintenance', $1::jsonb)
-         ON CONFLICT (key) DO UPDATE SET value = $1::jsonb`,
-        [JSON.stringify(data)]
-      );
+      await set('settings', 'maintenance', { value: data }, 'key');
     }
 
     return NextResponse.json(data);
@@ -52,11 +48,7 @@ export async function POST(request: NextRequest) {
     }
     current.updatedAt = Date.now();
 
-    await query(
-      `INSERT INTO settings (key, value) VALUES ('maintenance', $1::jsonb)
-       ON CONFLICT (key) DO UPDATE SET value = $1::jsonb`,
-      [JSON.stringify(current)]
-    );
+    await set('settings', 'maintenance', { value: current }, 'key');
 
     return NextResponse.json({ success: true, enabled: !!enabled });
   } catch (e: unknown) {

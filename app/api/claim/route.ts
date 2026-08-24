@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, update, increment } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,30 +15,30 @@ export async function POST(request: NextRequest) {
     }
 
     const now = Date.now();
-    const lastClaim = Number(user.lastclaim) || 0;
+    const lastClaim = Number(user.last_claim || user.lastclaim) || 0;
     const hoursSince = (now - lastClaim) / (1000 * 60 * 60);
 
-    if (hoursSince < 24) {
-      return NextResponse.json({ error: 'Must wait 24h between claims', hoursLeft: (24 - hoursSince).toFixed(1) }, { status: 400 });
+    if (lastClaim > 0 && hoursSince < 24) {
+      const hoursLeft = 24 - hoursSince;
+      const h = Math.floor(hoursLeft);
+      const m = Math.floor((hoursLeft - h) * 60);
+      return NextResponse.json({ error: `Claim available in ${h}h ${m}m`, hoursLeft: hoursLeft.toFixed(1) }, { status: 400 });
     }
 
-    const packageBoost = Number(user.packageboost) || 1;
-    const claimAmount = 1 * packageBoost;
+    const packageBoost = Number(user.package_boost || user.packageboost) || 1;
+    const claimAmount = parseFloat((0.05 * packageBoost).toFixed(4));
     const previousBalance = Number(user.balance) || 0;
     const previousStreak = Number(user.streak) || 0;
     const newBalance = previousBalance + claimAmount;
     const newStreak = previousStreak + 1;
 
-    await query(
-      `UPDATE users SET balance = $1, totalclaimed = COALESCE(totalclaimed, 0) + $2, lastclaim = $3, streak = $4 WHERE uid = $5`,
-      [newBalance, claimAmount, now, newStreak, uid]
-    );
-
-    await query(
-      `INSERT INTO claims (id, user_id, previous_balance, claimed_balance, claimed_amount, previous_streak, claimed_streak, time_since_last_claim, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'completed', $9)`,
-      [crypto.randomUUID(), uid, previousBalance, newBalance, claimAmount, previousStreak, newStreak, Math.round(hoursSince * 60 * 60 * 1000), now]
-    );
+    await update('users', uid, {
+      balance: newBalance,
+      total_claimed: (Number(user.total_claimed || user.totalclaimed) || 0) + claimAmount,
+      last_claim: now,
+      streak: newStreak,
+      streak_days: newStreak,
+    });
 
     return NextResponse.json({ success: true, claimed: claimAmount, balance: newBalance, streak: newStreak });
   } catch (e: unknown) {

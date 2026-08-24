@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, set, increment, update } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,15 +28,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Powerdrop has ended' }, { status: 400 });
     }
 
-    await query(
-      `INSERT INTO powerdrop_participants (id, event_id, address, joined_at) VALUES ($1, $2, $3, $4)`,
-      [crypto.randomUUID(), event_id, address, now]
-    );
+    const participantId = crypto.randomUUID();
+    await set('powerdrop_participants', participantId, {
+      event_id,
+      address,
+      joined_at: now,
+    });
 
-    await query(
-      `UPDATE powerdrops SET participants_count = COALESCE(participants_count, 0) + 1 WHERE id = $1`,
-      [event_id]
-    );
+    await update('powerdrops', event_id, {
+      participants_count: currentCount + 1,
+    }, 'id');
 
     return NextResponse.json({ success: true });
   } catch (e: unknown) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, query, increment, update, set } from '@/lib/db';
+import { get, increment, update, set, findWhere } from '@/lib/db';
 
 const PACKAGES: Record<string, { price: number; boost: number; cap: number; name: string }> = {
   starter:  { price: 5,   boost: 4,   cap: 50,   name: 'Starter' },
@@ -15,21 +15,11 @@ const ORIGINAL_STARTER_PRICE = 5;
 const STARTER_PROMO_PRICE = 2.5;
 const STARTER_PROMO_DURATION_DAYS = 7;
 
-let promoColumnReady = false;
-async function ensurePromoColumn() {
-  if (promoColumnReady) return;
-  try {
-    await query("ALTER TABLE package_purchases ADD COLUMN IF NOT EXISTS promo_applied BOOLEAN DEFAULT FALSE");
-    promoColumnReady = true;
-  } catch (e: unknown) {
-    console.error('Failed to add promo_applied column:', e instanceof Error ? e.message : String(e));
-  }
-}
-
 async function getStarterPromoConfig(): Promise<Record<string, unknown> | null> {
   try {
-    const res = await query("SELECT value FROM settings WHERE key = 'starterPromo'");
-    let val = (res.rows[0] as Record<string, unknown>)?.value;
+    const rows = await findWhere('settings', { key: 'starterPromo' });
+    if (!rows.length) return null;
+    let val = rows[0].value;
     if (typeof val === 'string') val = JSON.parse(val);
     return val as Record<string, unknown> | null;
   } catch {
@@ -46,22 +36,11 @@ function isStarterPromoActive(promoConfig: Record<string, unknown> | null): bool
 
 async function hasUserPurchasedStarter(uid: string): Promise<boolean> {
   try {
-    const res = await query(
-      "SELECT COUNT(*) FROM package_purchases WHERE uid = $1 AND package_id = $2",
-      [uid, 'starter']
-    );
-    return parseInt(res.rows[0]?.count as string || '0') > 0;
+    const rows = await findWhere('package_purchases', { uid, package_id: 'starter' });
+    return rows.length > 0;
   } catch {
     return false;
   }
-}
-
-async function lookupByRefCode(refCode: string) {
-  if (!refCode) return null;
-  const code = refCode.toUpperCase();
-  const res = await query('SELECT * FROM "users" WHERE UPPER("referral_code") = $1', [code]);
-  if (!res.rows.length) return null;
-  return { id: res.rows[0].uid as string, data: res.rows[0] as Record<string, unknown> };
 }
 
 async function processReferralCommission(uid: string, amount: number, pkgName: string) {
@@ -78,10 +57,10 @@ async function processReferralCommission(uid: string, amount: number, pkgName: s
     let currentRefCode = user.referred_by as string;
     for (const lv of levels) {
       if (!currentRefCode) break;
-      const refLookup = await lookupByRefCode(currentRefCode);
-      if (!refLookup) break;
-      const refUid = refLookup.id;
-      const refData = refLookup.data;
+      const refRows = await findWhere('users', { referral_code: currentRefCode.toUpperCase() });
+      if (!refRows.length) break;
+      const refData = refRows[0];
+      const refUid = refData.uid as string;
       currentRefCode = refData.referred_by as string;
       await increment('users', refUid, 'team_biz', amount);
 
@@ -90,27 +69,31 @@ async function processReferralCommission(uid: string, amount: number, pkgName: s
       }
 
       const commission = amount * lv.pct;
-      const used = (refData.package_usage as number) || 0;
-      const cap = (refData.package_cap as number) || Infinity;
+      const used = Number(refData.package_usage) || 0;
+      const cap = Number(refData.package_cap) || Infinity;
       const available = Math.max(0, cap - used);
       const capped = Math.min(commission, available);
       if (capped <= 0) continue;
-      const newUsed = used + capped;
 
       await increment('users', refUid, 'commission_balance', capped);
       await increment('users', refUid, 'package_usage', capped);
       await increment('users', refUid, 'total_commissions', capped);
 
-      if (newUsed >= cap) {
+      if (used + capped >= cap) {
         await update('users', refUid, { package_status: 'expired' });
       }
 
-      await query(
-        `INSERT INTO commissions (id, from_uid, uid, amount, level, type, package_name, from_name, created_at)
-         VALUES ($1, $2, $3, $4, $5, 'package_commission', $6, $7, $8)`,
-        ['comm_' + refUid + '_' + uid + '_' + Date.now(), uid, refUid, capped, lv.level,
-         pkgName || 'Package', (user.name as string) || 'User', Date.now()]
-      );
+      const commId = 'comm_' + refUid + '_' + uid + '_' + Date.now();
+      await set('commissions', commId, {
+        from_uid: uid,
+        uid: refUid,
+        amount: capped,
+        level: lv.level,
+        type: 'package_commission',
+        package_name: pkgName || 'Package',
+        from_name: (user.name as string) || 'User',
+        created_at: Date.now(),
+      });
     }
   } catch (e: unknown) {
     console.error('Referral commission error:', e);
@@ -140,7 +123,7 @@ export async function POST(request: NextRequest) {
       if (isStarterPromoActive(promoConfig)) {
         const alreadyPurchased = await hasUserPurchasedStarter(uid);
         if (alreadyPurchased) {
-          return NextResponse.json({ error: 'Starter package promo limited to one per account. You can purchase another package instead.' }, { status: 400 });
+          return NextResponse.json({ error: 'Starter package promo limited to one per account.' }, { status: 400 });
         }
         pkgPrice = STARTER_PROMO_PRICE;
         promoApplied = true;
@@ -151,21 +134,19 @@ export async function POST(request: NextRequest) {
     if (user.active_package && user.active_package !== 'none') {
       const currentPkg = PACKAGES[user.active_package as string];
       if (currentPkg) {
-        const usagePct = ((user.package_usage as number) || 0) / currentPkg.cap;
+        const usagePct = (Number(user.package_usage) || 0) / currentPkg.cap;
         if (usagePct < 5) credit = currentPkg.price * 0.7;
       }
     }
 
     const finalPrice = Math.max(0, pkgPrice - credit);
-    if ((user.wallet_balance as number || 0) < finalPrice) {
+    if ((Number(user.wallet_balance) || 0) < finalPrice) {
       return NextResponse.json({ error: 'Insufficient wallet balance' }, { status: 400 });
     }
 
     const prevCap = user.active_package && user.active_package !== 'none' && PACKAGES[user.active_package as string]
       ? PACKAGES[user.active_package as string].cap
       : 0;
-
-    await ensurePromoColumn();
 
     const freshUser = await get('users', uid);
     const freshBalance = Number(freshUser?.wallet_balance || 0);
@@ -185,8 +166,8 @@ export async function POST(request: NextRequest) {
       total_package_spend: (Number(user.total_package_spend || 0)) + pkgPrice,
     });
 
-    await set('package_purchases', 'pp_' + uid + '_' + Date.now(), {
-      id: 'pp_' + uid + '_' + Date.now(),
+    const ppId = 'pp_' + uid + '_' + Date.now();
+    await set('package_purchases', ppId, {
       uid,
       package_id: packageId,
       name: pkg.name,

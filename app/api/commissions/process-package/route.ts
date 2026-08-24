@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, findWhere, increment, incrementMulti, query } from '@/lib/db';
+import { get, findWhere, increment, incrementMulti, set } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,18 +34,17 @@ export async function POST(request: NextRequest) {
       const refUid = refRows[0].uid as string;
       const refData = refRows[0];
 
-      // Update teamBiz
-      await increment('users', refUid, 'team_biz', (user.total_package_spend as number) || 0);
+      await increment('users', refUid, 'team_biz', Number(user.total_package_spend) || 0);
 
       if (!refData.active_package || refData.active_package === 'none') {
         currentRefCode = refData.referred_by as string;
         continue;
       }
 
-      const pkgAmount = (user.package_amount as number) || 0;
+      const pkgAmount = Number(user.package_amount) || 0;
       const commission = pkgAmount * lv.pct;
-      const used = (refData.package_usage as number) || 0;
-      const cap = (refData.package_cap as number) || 999999;
+      const used = Number(refData.package_usage) || 0;
+      const cap = Number(refData.package_cap) || 999999;
       const available = Math.max(0, cap - used);
       const capped = Math.min(commission, available);
 
@@ -58,20 +57,16 @@ export async function POST(request: NextRequest) {
             package_usage: capped,
             total_commissions: capped,
           });
-          await query(
-            `INSERT INTO commissions (id, from_uid, uid, amount, level, type, package_name, from_name, created_at)
-             VALUES ($1, $2, $3, $4, $5, 'package_commission', $6, $7, $8)`,
-            [
-              commId,
-              uid,
-              refUid,
-              capped,
-              lv.level,
-              (user.active_package as string) || 'Package',
-              (user.name as string) || 'User',
-              Date.now(),
-            ]
-          );
+          await set('commissions', commId, {
+            from_uid: uid,
+            uid: refUid,
+            amount: capped,
+            level: lv.level,
+            type: 'package_commission',
+            package_name: (user.active_package as string) || 'Package',
+            from_name: (user.name as string) || 'User',
+            created_at: Date.now(),
+          });
           results.push({ level: lv.level, uid: refUid, amount: capped });
         }
       }

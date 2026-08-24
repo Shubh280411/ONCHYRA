@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, query } from '@/lib/db';
+import { get, all } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
     const authError = await requireAdmin(request);
     if (authError) return NextResponse.json({ error: authError.error }, { status: authError.status });
 
-    const rows = await query(`SELECT * FROM withdrawals ORDER BY created_at DESC LIMIT 100`);
+    const rows = await all('withdrawals', 'created_at', 100);
     const list = [];
-    for (const w of rows.rows) {
+    for (const w of rows) {
       const u = await get('users', w.uid as string);
       list.push({
         id: w.id,

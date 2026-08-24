@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get, incrementMulti } from '@/lib/db';
+import { get, findWhere, incrementMulti, update, remove } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -15,10 +15,8 @@ export async function POST(request: NextRequest) {
     if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    const commRes = await query(
-      `SELECT * FROM commissions WHERE type = 'package_commission' AND created_at > $1`, [oneHourAgo]
-    );
-    const records = commRes.rows;
+    const allComms = await findWhere('commissions', { type: 'package_commission' });
+    const records = allComms.filter(c => Number(c.created_at) > oneHourAgo);
 
     let reverted = 0, errors: string[] = [];
     for (const rec of records) {
@@ -26,19 +24,19 @@ export async function POST(request: NextRequest) {
         const user = await get('users', rec.uid as string);
         if (!user) continue;
 
-        const currentUsage = (user.package_usage as number) || 0;
-        if ((rec.amount as number) > 0 && currentUsage >= (rec.amount as number)) {
+        const currentUsage = Number(user.package_usage) || 0;
+        if (Number(rec.amount) > 0 && currentUsage >= Number(rec.amount)) {
           await incrementMulti('users', rec.uid as string, {
-            balance: -(rec.amount as number),
-            commission_balance: -(rec.amount as number),
-            package_usage: -(rec.amount as number),
-            total_commissions: -(rec.amount as number),
+            balance: -Number(rec.amount),
+            commission_balance: -Number(rec.amount),
+            package_usage: -Number(rec.amount),
+            total_commissions: -Number(rec.amount),
           });
-          if (currentUsage - (rec.amount as number) < ((user.package_cap as number) || 999999)) {
-            await query(`UPDATE users SET package_status = 'active' WHERE uid = $1`, [rec.uid]);
+          if (currentUsage - Number(rec.amount) < (Number(user.package_cap) || 999999)) {
+            await update('users', rec.uid as string, { package_status: 'active' });
           }
         }
-        await query(`DELETE FROM commissions WHERE id = $1`, [rec.id]);
+        await remove('commissions', rec.id as string, 'id');
         reverted++;
       } catch(e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);

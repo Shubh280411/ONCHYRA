@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, set, increment, findWhere, update } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -28,15 +28,18 @@ export async function POST(request: NextRequest) {
     const tok = token || (network === 'Polygon' ? 'POL' : 'USDT');
 
     if (fixDepositId) {
-      const old = await query("SELECT amount FROM deposits WHERE id=$1", [fixDepositId]);
-      if (!old.rows.length) {
+      const oldRows = await findWhere('deposits', { id: fixDepositId }, null, 1);
+      if (!oldRows.length) {
         return NextResponse.json({ error: 'Deposit not found' }, { status: 404 });
       }
-      const oldAmt = parseFloat(old.rows[0].amount as string) || 0;
-      await query("UPDATE deposits SET amount=$1, pol_price=$2 WHERE id=$3", [usdAmt.toFixed(2), pPrice, fixDepositId]);
+      const oldAmt = parseFloat(String(oldRows[0].amount)) || 0;
+      await update('deposits', fixDepositId, { amount: usdAmt.toFixed(2), pol_price: pPrice }, 'id');
       const diff = usdAmt - oldAmt;
       if (diff !== 0) {
-        await query("UPDATE users SET wallet_balance = COALESCE(wallet_balance, 0) + $1 WHERE uid = $2", [diff.toFixed(2), uid]);
+        const user = await get('users', uid);
+        if (user) {
+          await update('users', uid, { wallet_balance: (Number(user.wallet_balance) || 0) + diff });
+        }
       }
       console.log(`[MANUAL FIX] ${fixDepositId}: $${oldAmt} → $${usdAmt}, balance adj: ${diff.toFixed(2)}`);
       return NextResponse.json({ success: true, fixed: fixDepositId, oldAmount: oldAmt, newAmount: usdAmt, balanceAdjustment: diff });
@@ -44,15 +47,27 @@ export async function POST(request: NextRequest) {
 
     const depId = 'dep_manual_' + uid.slice(0, 8) + '_' + ts;
     const tx = 'manual_' + ts;
-    await query(
-      `INSERT INTO deposits (id, uid, address, network, amount, tx_hash, status, token, pol_amount, pol_price, detected_at, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'completed', $7, $8, $9, $10, $10)`,
-      [depId, uid, address, network, usdAmt.toFixed(2), tx, tok, polAmt, pPrice, ts]
-    );
-    await query(
-      `UPDATE users SET wallet_balance = COALESCE(wallet_balance, 0) + $1 WHERE uid = $2`,
-      [usdAmt.toFixed(2), uid]
-    );
+    await set('deposits', depId, {
+      uid,
+      address,
+      network,
+      amount: usdAmt.toFixed(2),
+      tx_hash: tx,
+      status: 'completed',
+      token: tok,
+      pol_amount: polAmt,
+      pol_price: pPrice,
+      detected_at: ts,
+      created_at: ts,
+    });
+
+    const user = await get('users', uid);
+    if (user) {
+      await update('users', uid, {
+        wallet_balance: (Number(user.wallet_balance) || 0) + usdAmt,
+      });
+    }
+
     console.log(`[MANUAL DEPOSIT] ${polAmt || usdAmt} ${tok} for ${uid}`);
     return NextResponse.json({ success: true, depositId: depId });
   } catch (e: unknown) {

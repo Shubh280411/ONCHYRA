@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, findWhere, findWhereIn, query } from '@/lib/db';
+import { get, findWhere, findWhereIn, findWhere as fw, set as dbSet, countWhere } from '@/lib/db';
 
 export async function GET(
   _request: NextRequest,
@@ -33,11 +33,8 @@ export async function GET(
         }
       }
 
-      const commRes = await query(
-        'SELECT COALESCE(SUM(amount),0) AS total FROM "commissions" WHERE "uid"=$1',
-        [uid]
-      );
-      totalCommissions = parseFloat((commRes.rows?.[0]?.total as string) || '0');
+      const commRows = await findWhere('commissions', { uid });
+      totalCommissions = commRows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
     }
 
     return NextResponse.json({
@@ -48,9 +45,15 @@ export async function GET(
       referredBy: u.referred_by || '',
       balance: Number(u.balance) || 0,
       walletBalance: Number(u.wallet_balance) || 0,
+      commissionBalance: Number(u.commission_balance) || 0,
       streak: Number(u.streak) || 0,
+      streakDays: Number(u.streak_days || u.streak) || 0,
+      lastClaim: Number(u.last_claim || u.lastclaim) || 0,
       activePackage: u.active_package || null,
       packageStatus: u.package_status || 'none',
+      packageBoost: Number(u.package_boost || u.packageboost) || 1,
+      packageCap: Number(u.package_cap || u.packagecap) || 0,
+      packageUsage: Number(u.package_usage || u.packageusage) || 0,
       createdAt: Number(u.created_at) || 0,
       refLevel1,
       refLevel2,
@@ -61,6 +64,8 @@ export async function GET(
       teamBiz: Number(u.team_biz) || 0,
       legABiz: Number(u.leg_a_biz) || 0,
       legBBiz: Number(u.leg_b_biz) || 0,
+      rank: u.rank || 'Unranked',
+      totalClaimed: Number(u.total_claimed || u.totalclaimed) || 0,
       purchasedPackages: u.purchased_packages
         ? typeof u.purchased_packages === 'string'
           ? JSON.parse(u.purchased_packages as string)
@@ -87,7 +92,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
-    const { set: dbSet } = await import('@/lib/db');
     const existing = await get('users', uid);
     if (!existing) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });

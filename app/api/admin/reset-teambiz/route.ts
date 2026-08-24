@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, all, update } from '@/lib/db';
 
 async function requireAdmin(request: NextRequest) {
   const uid = request.headers.get('x-auth-uid');
@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
     const authErr = await requireAdmin(request);
     if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
-    await query(`UPDATE users SET team_biz = 0`);
+    const users = await all('users');
+    for (const u of users) {
+      await update('users', u.uid as string, { team_biz: 0 });
+    }
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

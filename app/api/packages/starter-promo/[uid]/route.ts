@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { findWhere } from '@/lib/db';
 
 const ORIGINAL_STARTER_PRICE = 5;
 const STARTER_PROMO_PRICE = 2.5;
@@ -7,8 +7,9 @@ const STARTER_PROMO_DURATION_DAYS = 7;
 
 async function getStarterPromoConfig(): Promise<Record<string, unknown> | null> {
   try {
-    const res = await query("SELECT value FROM settings WHERE key = 'starterPromo'");
-    let val = (res.rows[0] as Record<string, unknown>)?.value;
+    const rows = await findWhere('settings', { key: 'starterPromo' });
+    if (!rows.length) return null;
+    let val = rows[0].value;
     if (typeof val === 'string') val = JSON.parse(val);
     return val as Record<string, unknown> | null;
   } catch {
@@ -25,11 +26,8 @@ function isStarterPromoActive(promoConfig: Record<string, unknown> | null): bool
 
 async function hasUserPurchasedStarter(uid: string): Promise<boolean> {
   try {
-    const res = await query(
-      "SELECT COUNT(*) FROM package_purchases WHERE uid = $1 AND package_id = $2",
-      [uid, 'starter']
-    );
-    return parseInt(res.rows[0]?.count as string || '0') > 0;
+    const rows = await findWhere('package_purchases', { uid, package_id: 'starter' });
+    return rows.length > 0;
   } catch {
     return false;
   }

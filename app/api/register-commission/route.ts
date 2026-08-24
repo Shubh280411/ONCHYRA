@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { set, get, findWhere, incrementMulti, query } from '@/lib/db';
+import { set, get, findWhere, incrementMulti } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,7 +8,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing uid or referredBy' }, { status: 400 });
     }
 
-    // Create user in PostgreSQL
     await set('users', uid, {
       name: name || 'User',
       email: email || '',
@@ -40,43 +39,54 @@ export async function POST(request: NextRequest) {
     const l1Data = refRows[0];
     const l1Uid = l1Data.uid as string;
 
-    // L1 bonus
     await incrementMulti('users', l1Uid, {
       balance: 0.25,
       referrals: 1,
       ref_level1: 1,
       total_directs: 1,
     });
-    await query(
-      `INSERT INTO commissions (id, uid, from_uid, from_name, amount, level, type, package_name, created_at)
-       VALUES ($1, $2, $3, $4, $5, 1, 'registration_bonus', 'Registration Bonus', $6)`,
-      ['reg_' + l1Uid + '_' + uid + '_' + Date.now(), l1Uid, uid, newUserName, 0.25, Date.now()]
-    );
+    await set('commissions', 'reg_' + l1Uid + '_' + uid + '_' + Date.now(), {
+      uid: l1Uid,
+      from_uid: uid,
+      from_name: newUserName,
+      amount: 0.25,
+      level: 1,
+      type: 'registration_bonus',
+      package_name: 'Registration Bonus',
+      created_at: Date.now(),
+    });
 
-    // L2 bonus
     if (l1Data.referred_by) {
       const l2Rows = await findWhere('users', { referral_code: l1Data.referred_by as string });
       if (l2Rows.length) {
-        const l2Data = l2Rows[0];
-        const l2Uid = l2Data.uid as string;
+        const l2Uid = l2Rows[0].uid as string;
         await incrementMulti('users', l2Uid, { balance: 0.1, ref_level2: 1 });
-        await query(
-          `INSERT INTO commissions (id, uid, from_uid, from_name, amount, level, type, package_name, created_at)
-           VALUES ($1, $2, $3, $4, $5, 2, 'registration_bonus', 'Registration Bonus', $6)`,
-          ['reg_' + l2Uid + '_' + uid + '_' + Date.now(), l2Uid, uid, newUserName, 0.1, Date.now()]
-        );
+        await set('commissions', 'reg_' + l2Uid + '_' + uid + '_' + Date.now(), {
+          uid: l2Uid,
+          from_uid: uid,
+          from_name: newUserName,
+          amount: 0.1,
+          level: 2,
+          type: 'registration_bonus',
+          package_name: 'Registration Bonus',
+          created_at: Date.now(),
+        });
 
-        // L3 bonus
-        if (l2Data.referred_by) {
-          const l3Rows = await findWhere('users', { referral_code: l2Data.referred_by as string });
+        if (l2Rows[0].referred_by) {
+          const l3Rows = await findWhere('users', { referral_code: l2Rows[0].referred_by as string });
           if (l3Rows.length) {
             const l3Uid = l3Rows[0].uid as string;
             await incrementMulti('users', l3Uid, { balance: 0.05, ref_level3: 1 });
-            await query(
-              `INSERT INTO commissions (id, uid, from_uid, from_name, amount, level, type, package_name, created_at)
-               VALUES ($1, $2, $3, $4, $5, 3, 'registration_bonus', 'Registration Bonus', $6)`,
-              ['reg_' + l3Uid + '_' + uid + '_' + Date.now(), l3Uid, uid, newUserName, 0.05, Date.now()]
-            );
+            await set('commissions', 'reg_' + l3Uid + '_' + uid + '_' + Date.now(), {
+              uid: l3Uid,
+              from_uid: uid,
+              from_name: newUserName,
+              amount: 0.05,
+              level: 3,
+              type: 'registration_bonus',
+              package_name: 'Registration Bonus',
+              created_at: Date.now(),
+            });
           }
         }
       }

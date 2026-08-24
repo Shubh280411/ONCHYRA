@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, get } from '@/lib/db';
+import { get, increment, set, update } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const walletBalance = Number(user.walletbalance) || 0;
+    const walletBalance = Number(user.wallet_balance || user.walletbalance) || 0;
     const betAmount = Number(amount);
 
     if (betAmount <= 0) {
@@ -34,25 +34,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Round not found or inactive' }, { status: 404 });
     }
 
-    await query(
-      `UPDATE users SET walletbalance = walletbalance - $1 WHERE uid = $2`,
-      [betAmount, user_id]
-    );
+    await increment('users', user_id, 'wallet_balance', -betAmount);
 
-    await query(
-      `INSERT INTO prediction_bets (id, user_id, round_id, amount, prediction, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [crypto.randomUUID(), user_id, round_id, betAmount, prediction, Date.now()]
-    );
+    const betId = crypto.randomUUID();
+    await set('prediction_bets', betId, {
+      user_id,
+      round_id,
+      amount: betAmount,
+      prediction,
+      created_at: Date.now(),
+    });
 
     const poolField = prediction === 'up' ? 'up_pool' : 'down_pool';
-    await query(
-      `UPDATE predictions SET total_bets = COALESCE(total_bets, 0) + 1,
-       total_pool = COALESCE(total_pool, 0) + $1,
-       ${poolField} = COALESCE("${poolField}", 0) + $1
-       WHERE id = $2`,
-      [betAmount, round_id]
-    );
+    await update('predictions', round_id, {
+      total_bets: (Number(round.total_bets) || 0) + 1,
+      total_pool: (Number(round.total_pool) || 0) + betAmount,
+      [poolField]: (Number(round[poolField]) || 0) + betAmount,
+    }, 'id');
 
     return NextResponse.json({ success: true });
   } catch (e: unknown) {

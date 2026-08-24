@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, update, query } from '@/lib/db';
+import { get, update, set } from '@/lib/db';
 import mailer from '@/lib/mailer';
 import { campaignState, broadcastSse } from '@/lib/email-campaign-state';
 
@@ -26,10 +26,7 @@ async function incrementDailyCount(amount: number) {
   const row = await get('settings', 'emailCounts', 'key');
   const counts: Record<string, any> = row ? (row.value || {}) : {};
   counts[todayStr()] = { count: count + amount, limit };
-  await query(
-    `INSERT INTO settings (key, value) VALUES ('emailCounts', $1::jsonb) ON CONFLICT (key) DO UPDATE SET value = $1::jsonb`,
-    [JSON.stringify(counts)]
-  );
+  await set('settings', 'emailCounts', { value: counts }, 'key');
 }
 
 function usernameReplace(html: string, name?: string) {
@@ -58,10 +55,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Missing subject or customHtml' }, { status: 400 });
     }
     if (campaignState.running && !isCampaignStuck()) {
-      return NextResponse.json({ success: false, message: 'A campaign is already running. Wait for it to finish.' }, { status: 429 });
+      return NextResponse.json({ success: false, message: 'A campaign is already running.' }, { status: 429 });
     }
     if (isCampaignStuck()) {
-      console.log('[RESET] Campaign stuck — force resetting');
       campaignState.running = false;
       broadcastSse({ type: 'error', message: 'Previous campaign stuck — reset' });
     }
@@ -69,7 +65,7 @@ export async function POST(request: NextRequest) {
     try {
       const { count: todayCount, limit: todayLimit } = await getDailyDoc(todayStr());
       if (todayCount >= todayLimit) {
-        return NextResponse.json({ success: false, message: `Daily limit reached (${todayCount}/${todayLimit}). Try again tomorrow.` }, { status: 429 });
+        return NextResponse.json({ success: false, message: `Daily limit reached (${todayCount}/${todayLimit}).` }, { status: 429 });
       }
     } catch (e: any) {
       console.log('[Manual] PG unavailable, skipping daily limit check:', e.message);
@@ -93,7 +89,6 @@ export async function POST(request: NextRequest) {
     campaignState.skipped = safetyTrimmed;
     campaignState.total = recipients.length;
 
-    // Fire-and-forget
     (async () => {
       for (let i = 0; i < recipients.length; i++) {
         const r = recipients[i];
@@ -104,12 +99,10 @@ export async function POST(request: NextRequest) {
           try { await incrementDailyCount(1); } catch (e: any) { console.log('[Manual] daily count increment failed:', e.message); }
           campaignState.logs.push({ email: r.email, name: r.name, status: 'sent' });
           broadcastSse({ type: 'sent', email: r.email, name: r.name, sent: campaignState.sent, failed: campaignState.failed });
-          console.log(`[SENT][MANUAL] ${r.email} — ${r.name}`);
         } catch (err: any) {
           campaignState.failed++;
           campaignState.logs.push({ email: r.email, name: r.name, status: 'failed', error: err.message });
           broadcastSse({ type: 'failed', email: r.email, name: r.name, sent: campaignState.sent, failed: campaignState.failed, error: err.message });
-          console.error(`[FAILED][MANUAL] ${r.email} — ${err.message}`);
         }
         if (i < recipients.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 250));
@@ -119,7 +112,7 @@ export async function POST(request: NextRequest) {
       broadcastSse({ type: 'done', sent: campaignState.sent, failed: campaignState.failed });
     })();
 
-    return NextResponse.json({ success: true, message: `Manual send started for ${recipients.length} recipient(s)${safetyTrimmed > 0 ? ` (${safetyTrimmed} trimmed)` : ''}`, total: recipients.length });
+    return NextResponse.json({ success: true, message: `Manual send started for ${recipients.length} recipient(s)`, total: recipients.length });
   } catch (err: any) {
     campaignState.running = false;
     broadcastSse({ type: 'error', message: err.message });

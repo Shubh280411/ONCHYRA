@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, increment, update, query } from '@/lib/db';
+import { get, increment, update, set, findWhere } from '@/lib/db';
 
 async function lookupByRefCode(refCode: string) {
-  const { findWhere } = await import('@/lib/db');
   if (!refCode) return null;
   const rows = await findWhere('users', { referral_code: refCode });
   if (!rows.length) return null;
@@ -25,8 +24,8 @@ async function payMatchingBonus(uid: string, rewardAmount: number) {
   const matchAmt = rewardAmount * 0.1;
   if (matchAmt <= 0) return;
 
-  const cap = (sponsor.package_cap as number) || Infinity;
-  const usage = (sponsor.package_usage as number) || 0;
+  const cap = Number(sponsor.package_cap) || Infinity;
+  const usage = Number(sponsor.package_usage) || 0;
   const canAdd = Math.min(matchAmt, cap - usage);
   if (canAdd <= 0) return;
 
@@ -34,28 +33,28 @@ async function payMatchingBonus(uid: string, rewardAmount: number) {
   await increment('users', sponsorUid, 'total_matching_bonus', canAdd);
   await increment('users', sponsorUid, 'package_usage', canAdd);
 
-  await query(
-    `INSERT INTO commissions (id, uid, from_uid, amount, type, created_at)
-     VALUES ($1, $2, $3, $4, 'matching_bonus', $5)`,
-    ['mb_' + sponsorUid + '_' + Date.now(), sponsorUid, uid, canAdd, Date.now()]
-  );
+  await set('commissions', 'mb_' + sponsorUid + '_' + Date.now(), {
+    uid: sponsorUid,
+    from_uid: uid,
+    amount: canAdd,
+    type: 'matching_bonus',
+    created_at: Date.now(),
+  });
 }
 
 export async function POST(_request: NextRequest) {
   try {
-    const rows = await query(
-      `SELECT * FROM users WHERE leadership_reward_start > 0 AND leadership_reward_start IS NOT NULL`
-    );
+    const rows = await findWhere('users', { leadership_reward_start: 'gt.0' });
     let distributed = 0;
-    for (const u of rows.rows) {
-      const maxDays = (u.leadership_reward_days as number) || 0;
-      const paid = (u.leadership_reward_payouts as number) || 0;
+    for (const u of rows) {
+      const maxDays = Number(u.leadership_reward_days) || 0;
+      const paid = Number(u.leadership_reward_payouts) || 0;
       if (paid >= maxDays) continue;
       if (!u.active_package || u.active_package === 'none' || u.package_status === 'expired') continue;
 
-      const dailyAmt = (u.leadership_reward_day as number) || 0;
-      const cap = (u.package_cap as number) || Infinity;
-      const usage = (u.package_usage as number) || 0;
+      const dailyAmt = Number(u.leadership_reward_day) || 0;
+      const cap = Number(u.package_cap) || Infinity;
+      const usage = Number(u.package_usage) || 0;
       const canAdd = Math.min(dailyAmt, cap - usage);
       if (canAdd <= 0) continue;
 
@@ -63,11 +62,13 @@ export async function POST(_request: NextRequest) {
       await increment('users', u.uid as string, 'package_usage', canAdd);
       await increment('users', u.uid as string, 'leadership_reward_payouts', 1);
 
-      await query(
-        `INSERT INTO leadership_rewards (id, uid, rank, amount, day, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        ['lr_' + u.uid + '_' + Date.now(), u.uid, u.leadership_reward_rank, canAdd, paid + 1, Date.now()]
-      );
+      await set('leadership_rewards', 'lr_' + u.uid + '_' + Date.now(), {
+        uid: u.uid,
+        rank: u.leadership_reward_rank,
+        amount: canAdd,
+        day: paid + 1,
+        created_at: Date.now(),
+      });
 
       await payMatchingBonus(u.uid as string, canAdd);
       distributed++;
