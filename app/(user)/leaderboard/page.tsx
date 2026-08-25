@@ -61,9 +61,9 @@ export default function LeaderboardPage() {
       const res = await fetch(`${apiUrl}/api/leaderboard?limit=100&myUid=${myUid}`);
       if (res.ok) {
         const d = await res.json();
-        setTopUsers(d.topUsers || []);
+        setTopUsers((d.leaders || d.topUsers || []).map((e: Record<string, unknown>, i: number) => ({ ...e, _rank: e.rank || (i + 1) })));
         setMyRank(d.myRank || null);
-        setMyBalance(Number(d.myBalance) || 0);
+        setMyBalance(d.myUserData ? Number(d.myUserData.balance) || 0 : Number(d.myBalance) || 0);
         setTotalUsers(d.totalUsers || 0);
       }
     } catch { /* silent */ }
