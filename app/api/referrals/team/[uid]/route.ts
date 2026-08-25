@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { uid } = await params;
     const maxLevel = parseInt(request.nextUrl.searchParams.get('maxLevel') || '1');
-    const limitVal = Math.min(parseInt(request.nextUrl.searchParams.get('limit') || '10'), 50);
+    const limitVal = Math.min(parseInt(request.nextUrl.searchParams.get('limit') || '10'), 500);
     const offset = parseInt(request.nextUrl.searchParams.get('offset') || '0');
 
     const user = await get('users', uid);

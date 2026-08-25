@@ -130,9 +130,8 @@ export default function ReferralsPage() {
       setLoadingTeam(true);
       try {
         const maxLvl = parseInt(levelFilter);
-        const offset = (teamPage - 1) * PAGE_SIZE;
         const params = maxLvl === 1
-          ? `maxLevel=1&limit=${PAGE_SIZE}&offset=${offset}`
+          ? `maxLevel=1&limit=1000&offset=0`
           : `maxLevel=${maxLvl}&limit=100&offset=0`;
         const res = await fetch(`${apiUrl}/api/referrals/team/${uid}?${params}`);
         if (res.ok) {
