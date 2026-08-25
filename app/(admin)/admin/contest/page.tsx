@@ -1,11 +1,9 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
 import { detectApiUrl } from '@/lib/utils';
-import Loading from '@/components/ui/Loading';
+import AdminLayout from '@/components/admin/AdminLayout';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -46,8 +44,12 @@ interface WinnerData {
   name?: string;
 }
 
+function getUid(): string | null {
+  if (typeof window === 'undefined') return null;
+  return document.cookie.match(/onc_uid=([^;]+)/)?.[1] ?? null;
+}
+
 export default function AdminContestPage() {
-  const { uid, loading: authLoading } = useAuth();
   const [activePage, setActivePage] = useState<'dashboard' | 'contests' | 'participants' | 'winners'>('dashboard');
   const [allContests, setAllContests] = useState<ContestData[]>([]);
   const [allParticipants, setAllParticipants] = useState<ParticipantData[]>([]);
@@ -77,29 +79,17 @@ export default function AdminContestPage() {
   const [allUsersList, setAllUsersList] = useState<{ id: string; name: string; email: string; referralCode: string }[]>([]);
 
   const { showToast, ToastComponent } = useToast();
-  const router = useRouter();
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!uid) { router.push('/admin/login'); return; }
-    checkAdmin();
-  }, [uid, authLoading]);
-
-  async function checkAdmin() {
-    try {
-      const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/check`, { headers: { 'x-auth-uid': uid! } });
-      if (!res.ok) { router.push('/admin/login'); return; }
-      loadDashboard();
-    } catch {
-      router.push('/admin/login');
-    }
-  }
+    loadDashboard();
+  }, []);
 
   async function loadDashboard() {
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/contests`, { headers: { 'x-auth-uid': uid! } });
+      const res = await fetch(`${apiUrl}/api/admin/contests`, { headers: { 'x-auth-uid': uid } });
       if (res.ok) {
         const data = await res.json();
         const contests: ContestData[] = Array.isArray(data.contests) ? data.contests : [];
@@ -115,9 +105,11 @@ export default function AdminContestPage() {
   }
 
   async function loadContests() {
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/contests`, { headers: { 'x-auth-uid': uid! } });
+      const res = await fetch(`${apiUrl}/api/admin/contests`, { headers: { 'x-auth-uid': uid } });
       if (res.ok) {
         const data = await res.json();
         setAllContests(Array.isArray(data.contests) ? data.contests : []);
@@ -150,6 +142,8 @@ export default function AdminContestPage() {
 
   async function saveContest() {
     if (!contestName.trim() || !contestEnd) { showToast('Fill all required fields', 'error'); return; }
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
       const body: Record<string, unknown> = {
@@ -161,7 +155,7 @@ export default function AdminContestPage() {
       if (editingContestId) body.id = editingContestId;
       const res = await fetch(`${apiUrl}/api/admin/contests/save`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error('Failed');
@@ -174,11 +168,13 @@ export default function AdminContestPage() {
   }
 
   async function toggleContest(id: string, active: boolean) {
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
       await fetch(`${apiUrl}/api/admin/contests/toggle`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid },
         body: JSON.stringify({ id, active }),
       });
       showToast(`Contest ${active ? 'activated' : 'ended'}!`);
@@ -190,11 +186,13 @@ export default function AdminContestPage() {
 
   async function deleteContest(id: string) {
     if (!confirm('Delete this contest?')) return;
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
       await fetch(`${apiUrl}/api/admin/contests/delete`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid },
         body: JSON.stringify({ id }),
       });
       showToast('Contest deleted!');
@@ -206,9 +204,11 @@ export default function AdminContestPage() {
 
   async function loadParticipants() {
     if (!selectedContestId) { setAllParticipants([]); return; }
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/contests/participants?contestId=${selectedContestId}`, { headers: { 'x-auth-uid': uid! } });
+      const res = await fetch(`${apiUrl}/api/admin/contests/participants?contestId=${selectedContestId}`, { headers: { 'x-auth-uid': uid } });
       if (res.ok) {
         const data = await res.json();
         setAllParticipants(Array.isArray(data) ? data : []);
@@ -227,6 +227,8 @@ export default function AdminContestPage() {
   }
 
   async function showAddParticipant() {
+    const uid = getUid();
+    if (!uid) return;
     setAddParticipantModal(true);
     setAddContestId(selectedContestId || allContests[0]?.id || '');
     setAddUserSearch('');
@@ -234,7 +236,7 @@ export default function AdminContestPage() {
     setAddSelectedUserId(null);
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/users`, { headers: { 'x-auth-uid': uid! } });
+      const res = await fetch(`${apiUrl}/api/admin/users`, { headers: { 'x-auth-uid': uid } });
       if (res.ok) {
         const data = await res.json();
         setAllUsersList(Array.isArray(data) ? data.map((u: Record<string, unknown>) => ({
@@ -249,11 +251,13 @@ export default function AdminContestPage() {
 
   async function confirmAddParticipant() {
     if (!addContestId || !addSelectedUserId) { showToast('Select contest and user', 'error'); return; }
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
       const res = await fetch(`${apiUrl}/api/admin/contests/add-participant`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid },
         body: JSON.stringify({ contestId: addContestId, userId: addSelectedUserId, levelType: addLevelType }),
       });
       if (!res.ok) throw new Error('Failed');
@@ -267,11 +271,13 @@ export default function AdminContestPage() {
 
   async function removeParticipant(id: string) {
     if (!confirm('Remove this participant?')) return;
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
       await fetch(`${apiUrl}/api/admin/contests/remove-participant`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid },
         body: JSON.stringify({ id }),
       });
       showToast('Participant removed!');
@@ -283,9 +289,11 @@ export default function AdminContestPage() {
 
   async function loadWinners() {
     if (!winnerContestId) { setAllParticipants([]); return; }
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/contests/participants?contestId=${winnerContestId}`, { headers: { 'x-auth-uid': uid! } });
+      const res = await fetch(`${apiUrl}/api/admin/contests/participants?contestId=${winnerContestId}`, { headers: { 'x-auth-uid': uid } });
       if (res.ok) {
         const data = await res.json();
         setAllParticipants(Array.isArray(data) ? data : []);
@@ -296,11 +304,13 @@ export default function AdminContestPage() {
   async function declareWinners() {
     if (!winnerContestId) { showToast('Select a contest first', 'error'); return; }
     if (!confirm('Declare top 3 as winners?')) return;
+    const uid = getUid();
+    if (!uid) return;
     try {
       const apiUrl = detectApiUrl();
       const res = await fetch(`${apiUrl}/api/admin/contests/declare-winners`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid },
         body: JSON.stringify({ contestId: winnerContestId }),
       });
       if (!res.ok) throw new Error('Failed');
@@ -311,8 +321,6 @@ export default function AdminContestPage() {
     }
   }
 
-  if (loading) return <Loading text="Loading contests..." />;
-
   const contestSelects = allContests;
   const sortedParticipants = [...allParticipants].sort((a, b) => (b.contestReferrals || 0) - (a.contestReferrals || 0));
   const winners = sortedParticipants.filter((p) => (p.contestReferrals || 0) >= 1).slice(0, 3);
@@ -320,8 +328,7 @@ export default function AdminContestPage() {
   const prizes = currentContest?.prizes || { rank1: 15, rank2: 10, rank3: 5 };
 
   return (
-    <div className="min-h-screen bg-[#03040a] text-white">
-      {/* Nav */}
+    <AdminLayout title="Contest Management">
       <div className="flex gap-2 p-4 bg-[rgba(10,12,25,0.95)] border-b border-white/10 sticky top-0 z-50">
         {([
           { key: 'dashboard', label: 'Dashboard' },
@@ -535,6 +542,6 @@ export default function AdminContestPage() {
       </Modal>
 
       {ToastComponent}
-    </div>
+    </AdminLayout>
   );
 }

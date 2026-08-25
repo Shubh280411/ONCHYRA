@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { detectApiUrl, formatTimeAgo } from '@/lib/utils';
+import AdminLayout from '@/components/admin/AdminLayout';
 
 interface WithdrawalRow {
   id: string;
@@ -19,7 +19,7 @@ interface WithdrawalRow {
 }
 
 export default function AdminWithdrawalsPage() {
-  const { uid, loading: authLoading } = useAuth();
+  const { uid } = useAuth();
   const [allWithdrawals, setAllWithdrawals] = useState<WithdrawalRow[]>([]);
   const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,13 +29,11 @@ export default function AdminWithdrawalsPage() {
   const [txModal, setTxModal] = useState<{ open: boolean; id: string }>({ open: false, id: '' });
   const [txHash, setTxHash] = useState('');
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!uid) { router.push('/admin/login'); return; }
+    if (!uid) return;
     loadWithdrawals();
-  }, [uid, authLoading]);
+  }, [uid]);
 
   async function loadWithdrawals() {
     try {
@@ -117,7 +115,6 @@ export default function AdminWithdrawalsPage() {
   };
 
   const SvgRefresh = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>;
-  const SvgBack = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>;
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#03040a' }}>
@@ -166,19 +163,8 @@ export default function AdminWithdrawalsPage() {
   const thStyle = { padding: '12px 14px', textAlign: 'left' as const, fontWeight: 600, fontSize: 10, textTransform: 'uppercase' as const, letterSpacing: 0.5, color: 'rgba(255,255,255,0.35)', borderBottom: '1px solid rgba(255,255,255,0.08)', whiteSpace: 'nowrap' as const };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#03040a', color: 'white', fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '20px 16px 80px' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: 18 }}>
-            <svg viewBox="0 0 36 36" width="36" height="36"><rect width="36" height="36" rx="10" fill="url(#wg)"/><defs><linearGradient id="wg" x1="0" y1="0" x2="36" y2="36"><stop stopColor="#a78bfa"/><stop offset="1" stopColor="#60a5fa"/></linearGradient></defs><text x="18" y="24" textAnchor="middle" fill="#000" fontFamily="'Space Grotesk'" fontWeight="900" fontSize="18">W</text></svg>
-            <span style={{ background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Withdrawals</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <a href="/admin" style={{ padding: '8px 16px', borderRadius: 10, fontWeight: 600, fontSize: 12, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}><SvgBack /> Panel</a>
-          </div>
-        </div>
-
+    <AdminLayout title="Withdrawal Management">
+      <div style={{ maxWidth: 1100, margin: '0 auto', paddingBottom: 80 }}>
         {error && <div style={{ padding: 12, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, fontSize: 12, color: '#ef4444', textAlign: 'center', marginBottom: 16 }}>{error}</div>}
 
         {/* Tabs */}
@@ -307,6 +293,6 @@ export default function AdminWithdrawalsPage() {
           {toast.msg}
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

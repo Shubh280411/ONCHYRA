@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/auth/AuthProvider';
 import { detectApiUrl, formatTimeAgo } from '@/lib/utils';
+import AdminLayout from '@/components/admin/AdminLayout';
 
 interface UserData {
   id: string;
@@ -21,7 +20,6 @@ interface UserData {
 }
 
 export default function AdminUsersPage() {
-  const { uid, loading: authLoading } = useAuth();
   const [allUsers, setAllUsers] = useState<UserData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserData[]>([]);
@@ -32,21 +30,17 @@ export default function AdminUsersPage() {
   const [statTotal, setStatTotal] = useState(0);
   const [statBanned, setStatBanned] = useState(0);
   const [statOnc, setStatOnc] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(null);
-  const router = useRouter();
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!uid) { router.push('/admin/login'); return; }
-    loadUsers();
-  }, [uid, authLoading]);
+  useEffect(() => { loadUsers(); }, []);
 
   async function loadUsers() {
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/users`, { headers: { 'x-auth-uid': uid! } });
-      if (!res.ok) { router.push('/admin/login'); return; }
+      const uid = typeof window !== 'undefined' ? document.cookie.match(/onc_uid=([^;]+)/)?.[1] : null;
+      if (!uid) return;
+      const res = await fetch(`${apiUrl}/api/admin/users`, { headers: { 'x-auth-uid': uid } });
+      if (!res.ok) return;
       const data = await res.json();
       const users: UserData[] = Array.isArray(data) ? data.map((u: Record<string, unknown>) => ({
         id: String(u.id || u.uid || ''), name: String(u.name || ''), email: String(u.email || ''),
@@ -58,8 +52,7 @@ export default function AdminUsersPage() {
       setStatTotal(users.length);
       setStatBanned(users.filter((u) => u.banned).length);
       setStatOnc(users.reduce((s, u) => s + u.balance, 0));
-      setLoading(false);
-    } catch { showToast('Failed to load users', true); setLoading(false); }
+    } catch { showToast('Failed to load users', true); }
   }
 
   const handleSearch = useCallback((val: string) => {
@@ -79,7 +72,9 @@ export default function AdminUsersPage() {
     setSearchQuery('');
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/transactions`, { headers: { 'x-auth-uid': uid! } });
+      const uid = typeof window !== 'undefined' ? document.cookie.match(/onc_uid=([^;]+)/)?.[1] : null;
+      if (!uid) return;
+      const res = await fetch(`${apiUrl}/api/admin/transactions`, { headers: { 'x-auth-uid': uid } });
       if (res.ok) { const d = await res.json(); setTransactions(Array.isArray(d) ? d : []); }
     } catch { /* ignore */ }
   }
@@ -90,8 +85,10 @@ export default function AdminUsersPage() {
     if (!confirm(`${isAdd ? 'Add' : 'Remove'} ${amt} ONC ${isAdd ? 'to' : 'from'} ${selectedUser.name || 'user'}?`)) return;
     try {
       const apiUrl = detectApiUrl();
+      const uid = typeof window !== 'undefined' ? document.cookie.match(/onc_uid=([^;]+)/)?.[1] : null;
+      if (!uid) return;
       const res = await fetch(`${apiUrl}/api/admin/user/update`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid },
         body: JSON.stringify({ userId: selectedUser.id, action: isAdd ? 'add_balance' : 'remove_balance', amount: amt }),
       });
       if (!res.ok) throw new Error('Failed');
@@ -106,8 +103,10 @@ export default function AdminUsersPage() {
     if (!confirm(`${ban ? 'BAN' : 'UNBAN'} ${selectedUser.name || 'user'}?`)) return;
     try {
       const apiUrl = detectApiUrl();
+      const uid = typeof window !== 'undefined' ? document.cookie.match(/onc_uid=([^;]+)/)?.[1] : null;
+      if (!uid) return;
       const res = await fetch(`${apiUrl}/api/admin/user/update`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid },
         body: JSON.stringify({ userId: selectedUser.id, action: 'set_banned', banned: ban }),
       });
       if (!res.ok) throw new Error('Failed');
@@ -122,48 +121,15 @@ export default function AdminUsersPage() {
     setTimeout(() => setToast(null), 3000);
   }
 
-  function handleLogout() {
-    import('firebase/auth').then(({ signOut }) => {
-      import('firebase/app').then(({ getApps, initializeApp }) => {
-        const app = getApps().length ? getApps()[0] : initializeApp({ apiKey: 'AIzaSyDLAekP6DO0oKQQzD7USkiyCm0M3BFoyYI', authDomain: 'onchyra.firebaseapp.com', projectId: 'onchyra' });
-        signOut(require('firebase/auth').getAuth(app)).then(() => router.push('/admin/login'));
-      });
-    });
-  }
-
   const SvgSearch = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
   const SvgPlus = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
   const SvgMinus = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>;
   const SvgShield = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
   const SvgWallet = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 10H2"/></svg>;
-  const SvgLogout = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
-
-  if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#03040a' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid rgba(167,139,250,0.1)', borderTop: '3px solid #a78bfa', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, textTransform: 'uppercase' as const, fontWeight: 700 }}>Loading users...</div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      </div>
-    </div>
-  );
 
   return (
-    <div style={{ minHeight: '100vh', background: '#03040a', backgroundImage: 'radial-gradient(ellipse at 20% 0%, rgba(167,139,250,0.06) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, rgba(96,165,250,0.04) 0%, transparent 50%)', color: 'white', fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '20px 16px 80px' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', marginBottom: 30, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, backdropFilter: 'blur(20px)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: 18, color: '#000' }}>ON</div>
-            <div>
-              <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 800, background: 'linear-gradient(90deg, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>ONCHYRA Control Center</h1>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>Admin Panel — User Management</div>
-            </div>
-          </div>
-          <button onClick={handleLogout} style={{ padding: '10px 18px', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 14, background: 'rgba(239,68,68,0.1)', color: '#ef4444', fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <SvgLogout /> Logout
-          </button>
-        </div>
+    <AdminLayout title="User Management">
+      <div style={{ color: 'white', fontFamily: "'Inter', sans-serif" }}>
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
@@ -335,6 +301,6 @@ export default function AdminUsersPage() {
         </div>
       )}
       <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }`}</style>
-    </div>
+    </AdminLayout>
   );
 }

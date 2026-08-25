@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { detectApiUrl } from '@/lib/utils';
+import AdminLayout from '@/components/admin/AdminLayout';
 
 interface NotiUser { id: string; name: string; email: string; balance: number; }
 interface NotiHistory { id: string; type: string; title: string; message: string; userId: string; link?: string; linkTitle?: string; createdAt?: number; }
@@ -27,21 +27,17 @@ export default function AdminNotificationsPage() {
   const [statUsers, setStatUsers] = useState(0);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!uid) { router.push('/admin/login'); return; }
+    if (authLoading || !uid) return;
     loadData();
   }, [uid, authLoading]);
 
   async function loadData() {
     try {
       const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/check`, { headers: { 'x-auth-uid': uid! } });
-      if (!res.ok) { router.push('/admin/login'); return; }
       await Promise.all([loadStats(), loadHistory()]);
-    } catch { router.push('/admin/login'); }
+    } catch { /* ignore */ }
   }
 
   async function loadStats() {
@@ -126,11 +122,13 @@ export default function AdminNotificationsPage() {
   const SvgBell = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
 
   if (loading) return (
-    <div style={{ position: 'fixed', inset: 0, background: '#03040a', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, flexDirection: 'column', gap: 16 }}>
-      <div style={{ width: 40, height: 40, border: '3px solid rgba(167,139,250,0.1)', borderTop: '3px solid #a78bfa', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, textTransform: 'uppercase' as const, fontWeight: 700 }}>Verifying Admin Access...</div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-    </div>
+    <AdminLayout title="Notifications">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, minHeight: '60vh' }}>
+        <div style={{ width: 40, height: 40, border: '3px solid rgba(167,139,250,0.1)', borderTop: '3px solid #a78bfa', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, textTransform: 'uppercase' as const, fontWeight: 700 }}>Loading Notifications...</div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </div>
+    </AdminLayout>
   );
 
   const showPreview = title.trim() || message.trim();
@@ -138,9 +136,9 @@ export default function AdminNotificationsPage() {
   const labelStyle: React.CSSProperties = { fontSize: 12, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 6, marginTop: 12 };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#03040a', color: 'white', fontFamily: "'Inter', sans-serif" }}>
-      {/* Nav */}
-      <div style={{ display: 'flex', gap: 8, padding: 16, background: 'rgba(10,12,25,0.95)', borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'sticky', top: 0, zIndex: 50 }}>
+    <AdminLayout title="Notifications">
+      {/* Tab Nav */}
+      <div style={{ display: 'flex', gap: 8, padding: 16, background: 'rgba(10,12,25,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, marginBottom: 24 }}>
         {([
           { key: 'send', label: 'Send', icon: <SvgSend /> },
           { key: 'history', label: 'History', icon: <SvgHistory /> },
@@ -152,11 +150,11 @@ export default function AdminNotificationsPage() {
         ))}
       </div>
 
-      <div style={{ padding: '20px 16px', maxWidth: 1000, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1000 }}>
         {/* SEND PAGE */}
         {activePage === 'send' && (
           <>
-            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 800, margin: '0 0 25px' }}>Send Notification</h1>
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 800, margin: '0 0 25px' }}>Send Notification</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15, marginBottom: 30 }}>
               <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20 }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' as const, letterSpacing: 1 }}>Total Sent</div><div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 32, fontWeight: 800, marginTop: 5, color: '#a78bfa' }}>{statTotal}</div></div>
               <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20 }}><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' as const, letterSpacing: 1 }}>Total Users</div><div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 32, fontWeight: 800, marginTop: 5, color: '#22c55e' }}>{statUsers}</div></div>
@@ -246,7 +244,7 @@ export default function AdminNotificationsPage() {
         {/* HISTORY PAGE */}
         {activePage === 'history' && (
           <>
-            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 800, margin: '0 0 25px' }}>History</h1>
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 800, margin: '0 0 25px' }}>History</h2>
             <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18, padding: 20, marginBottom: 20, overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -274,7 +272,7 @@ export default function AdminNotificationsPage() {
         {/* USERS PAGE */}
         {activePage === 'users' && (
           <>
-            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 800, margin: '0 0 25px' }}>Users</h1>
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 800, margin: '0 0 25px' }}>Users</h2>
             <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18, padding: 20, overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -303,6 +301,6 @@ export default function AdminNotificationsPage() {
           {toast.msg}
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

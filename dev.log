@@ -37,3 +37,6 @@
  GET /api/leaderboard?limit=3 200 in 316ms (next.js: 3ms, application-code: 312ms)
  GET /api/notifications/6AsI8MC5PRTYbCcvW8h0d8uvqt53 200 in 384ms (next.js: 23ms, application-code: 360ms)
  GET /api/user/6AsI8MC5PRTYbCcvW8h0d8uvqt53 200 in 868ms (next.js: 10ms, application-code: 858ms)
+ GET /api/leaderboard?limit=3 200 in 326ms (next.js: 4ms, application-code: 322ms)
+ GET /api/notifications/6AsI8MC5PRTYbCcvW8h0d8uvqt53 200 in 382ms (next.js: 6ms, application-code: 376ms)
+ GET /api/user/6AsI8MC5PRTYbCcvW8h0d8uvqt53 200 in 983ms (next.js: 8ms, application-code: 975ms)

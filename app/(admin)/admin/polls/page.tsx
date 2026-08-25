@@ -1,13 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
 import { detectApiUrl } from '@/lib/utils';
-import Loading from '@/components/ui/Loading';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
+import AdminLayout from '@/components/admin/AdminLayout';
 
 interface PollData {
   id: string;
@@ -17,30 +14,16 @@ interface PollData {
 }
 
 export default function AdminPollsPage() {
-  const { uid, loading: authLoading } = useAuth();
+  const { uid } = useAuth();
   const [polls, setPolls] = useState<PollData[]>([]);
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState('');
   const [loading, setLoading] = useState(true);
   const { showToast, ToastComponent } = useToast();
-  const router = useRouter();
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!uid) { router.push('/admin/login'); return; }
-    checkAdmin();
-  }, [uid, authLoading]);
-
-  async function checkAdmin() {
-    try {
-      const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/check`, { headers: { 'x-auth-uid': uid! } });
-      if (!res.ok) { router.push('/admin/login'); return; }
-      loadPolls();
-    } catch {
-      router.push('/admin/login');
-    }
-  }
+    if (uid) loadPolls();
+  }, [uid]);
 
   async function loadPolls() {
     try {
@@ -99,76 +82,76 @@ export default function AdminPollsPage() {
     }
   }
 
-  if (loading) return <Loading text="Loading polls..." />;
-
   return (
-    <div className="min-h-screen bg-[#03040a] text-white p-5 md:p-7 max-w-[1000px] mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <a href="/admin" className="text-white/35 no-underline text-xs font-semibold hover:text-white/60 transition-colors">← Admin</a>
-      </div>
-
-      <h1 className="font-[family-name:var(--font-space-grotesk)] text-[28px] font-extrabold mb-6">Polls</h1>
-
-      <Card className="mb-5">
-        <div className="flex justify-between items-center mb-4">
-          <div className="font-[family-name:var(--font-space-grotesk)] text-lg font-bold">Create Poll</div>
-        </div>
-        <div className="mb-3.5">
-          <label className="block text-xs font-semibold text-white/60 mb-1.5">Question</label>
-          <input type="text" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="e.g. What feature should we build next?" className="w-full py-3 px-3.5 rounded-[10px] border border-white/[0.1] bg-white/[0.03] text-white text-sm outline-none focus:border-[var(--primary)]" />
-        </div>
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-white/60 mb-1.5">Options (one per line)</label>
-          <textarea value={options} onChange={(e) => setOptions(e.target.value)} placeholder={"Option A\nOption B\nOption C"} className="w-full min-h-[60px] py-3 px-3.5 rounded-[10px] border border-white/[0.1] bg-white/[0.03] text-white text-sm outline-none focus:border-[var(--primary)] resize-vertical" />
-        </div>
-        <Button onClick={createPoll}>Create Poll</Button>
-      </Card>
-
-      <Card>
-        <div className="font-[family-name:var(--font-space-grotesk)] text-lg font-bold mb-4">All Polls</div>
-        {polls.length === 0 ? (
-          <div className="text-center py-10 text-white/30 text-sm">No polls yet. Create one above.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[13px]">
-              <thead><tr>{['Question', 'Options', 'Results', 'Action'].map((h) => <th key={h} className="text-left py-3 px-2.5 text-white/50 border-b border-white/[0.1] text-[11px] uppercase tracking-wider">{h}</th>)}</tr></thead>
-              <tbody>
-                {polls.map((p) => {
-                  const total = Object.values(p.results || {}).reduce((a, b) => a + b, 0);
-                  return (
-                    <tr key={p.id} className="border-b border-white/[0.03]">
-                      <td className="py-3 px-2.5 font-bold">{p.question || 'Untitled'}</td>
-                      <td className="py-3 px-2.5">
-                        <div className="flex flex-wrap gap-1">
-                          {p.options.map((o) => <span key={o} className="text-[11px] bg-white/5 px-2 py-0.5 rounded-md text-white/70">{o}</span>)}
-                        </div>
-                      </td>
-                      <td className="py-3 px-2.5 min-w-[220px]">
-                        {p.options.map((o) => {
-                          const c = (p.results || {})[o] || 0;
-                          const pct = total > 0 ? Math.round((c / total) * 100) : 0;
-                          return (
-                            <div key={o} className="flex items-center gap-2 mb-1">
-                              <span className="text-[11px] text-white/60 min-w-[80px]">{o}</span>
-                              <div className="h-1.5 rounded bg-[var(--primary)]" style={{ width: `${pct}%`, maxWidth: 150 }} />
-                              <span className="text-[11px] font-bold text-[var(--primary)] min-w-[35px] text-right">{pct}%</span>
-                              <span className="text-[10px] text-white/40">({c})</span>
-                            </div>
-                          );
-                        })}
-                      </td>
-                      <td className="py-3 px-2.5">
-                        <button onClick={() => deletePoll(p.id)} className="px-3 py-1.5 bg-red-500/15 text-red-500 border-none rounded-lg text-[11px] font-bold cursor-pointer hover:bg-red-500/25 transition-colors">Delete</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+    <AdminLayout title="Poll Management">
       {ToastComponent}
-    </div>
+      <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: 20, marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Space Grotesk'", fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Create Poll</div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>Question</label>
+            <input type="text" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="e.g. What feature should we build next?" style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: 'white', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>Options (one per line)</label>
+            <textarea value={options} onChange={(e) => setOptions(e.target.value)} placeholder={"Option A\nOption B\nOption C"} style={{ width: '100%', minHeight: 60, padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: 'white', fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+          </div>
+          <button onClick={createPoll} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #2563eb)', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Create Poll</button>
+        </div>
+
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: 20 }}>
+          <div style={{ fontFamily: "'Space Grotesk'", fontSize: 18, fontWeight: 700, marginBottom: 16 }}>All Polls</div>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 30, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>Loading...</div>
+          ) : polls.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>No polls yet. Create one above.</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    {['Question', 'Options', 'Results', 'Action'].map((h) => (
+                      <th key={h} style={{ textAlign: 'left', padding: '12px 10px', color: 'rgba(255,255,255,0.4)', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {polls.map((p) => {
+                    const total = Object.values(p.results || {}).reduce((a, b) => a + b, 0);
+                    return (
+                      <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <td style={{ padding: '12px 10px', fontWeight: 700 }}>{p.question || 'Untitled'}</td>
+                        <td style={{ padding: '12px 10px' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {p.options.map((o) => <span key={o} style={{ fontSize: 11, background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 6, color: 'rgba(255,255,255,0.6)' }}>{o}</span>)}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 10px', minWidth: 220 }}>
+                          {p.options.map((o) => {
+                            const c = (p.results || {})[o] || 0;
+                            const pct = total > 0 ? Math.round((c / total) * 100) : 0;
+                            return (
+                              <div key={o} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', minWidth: 80 }}>{o}</span>
+                                <div style={{ height: 6, borderRadius: 3, background: '#a78bfa', width: `${Math.max(pct, 2)}%`, maxWidth: 120 }} />
+                                <span style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', minWidth: 35, textAlign: 'right' }}>{pct}%</span>
+                                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>({c})</span>
+                              </div>
+                            );
+                          })}
+                        </td>
+                        <td style={{ padding: '12px 10px' }}>
+                          <button onClick={() => deletePoll(p.id)} style={{ padding: '6px 14px', background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Delete</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </AdminLayout>
   );
 }

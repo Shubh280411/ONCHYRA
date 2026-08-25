@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { detectApiUrl } from '@/lib/utils';
+import AdminLayout from '@/components/admin/AdminLayout';
 
 interface FeedItem { email: string; name?: string; status: string; error?: string; }
 interface DailyData { today: { count: number; limit: number }; history: { date: string; count: number; limit: number }[]; }
 
 export default function AdminCampaignPage() {
-  const { uid, loading: authLoading } = useAuth();
+  const { uid } = useAuth();
   const [activeTab, setActiveTab] = useState<'bulk' | 'manual' | 'csv'>('bulk');
   const [subject, setSubject] = useState('');
   const [html, setHtml] = useState('');
@@ -28,22 +28,12 @@ export default function AdminCampaignPage() {
   const feedRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!uid) { router.push('/admin/login'); return; }
-    checkAdmin();
-  }, [uid, authLoading]);
-
-  async function checkAdmin() {
-    try {
-      const apiUrl = detectApiUrl();
-      const res = await fetch(`${apiUrl}/api/admin/check`, { headers: { 'x-auth-uid': uid! } });
-      if (!res.ok) { router.push('/admin/login'); return; }
-      fetchDailyStats(); connectSSE();
-    } catch { router.push('/admin/login'); }
-  }
+    if (!uid) return;
+    fetchDailyStats();
+    connectSSE();
+  }, [uid]);
 
   async function fetchDailyStats() {
     try {
@@ -131,18 +121,6 @@ export default function AdminCampaignPage() {
   const SvgBolt = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
   const SvgUpload = () => <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
   const SvgWarning = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
-  const SvgBack = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>;
-
-  if (authLoading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#03040a' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid rgba(167,139,250,0.1)', borderTop: '3px solid #a78bfa', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, textTransform: 'uppercase' as const, fontWeight: 700 }}>Loading campaigns...</div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      </div>
-    </div>
-  );
-
   const FieldLabel = ({ label, badge }: { label: string; badge?: string }) => (
     <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 0.8, color: 'rgba(255,255,255,0.45)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
       {label} {badge && <span style={{ fontSize: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', padding: '2px 7px', borderRadius: 6, fontWeight: 600 }}>{badge}</span>}
@@ -151,10 +129,8 @@ export default function AdminCampaignPage() {
   const inputStyle: React.CSSProperties = { width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#fff', padding: '12px 14px', outline: 'none' };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#03040a', color: '#fff', fontFamily: "'Inter', sans-serif", padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 720 }}>
-        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: 22, background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 4 }}>ONCHYRA</div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>Email Campaign Dashboard</div>
+    <AdminLayout title="Email Campaigns">
+      <div style={{ color: '#fff', fontFamily: "'Inter', sans-serif", maxWidth: 720 }}>
 
         {/* Stats */}
         <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
@@ -307,9 +283,6 @@ export default function AdminCampaignPage() {
           </div>
         )}
 
-        <a href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.35)', textDecoration: 'none', fontSize: 11, fontWeight: 600, marginTop: 24, transition: 'color 0.2s' }}><SvgBack /> Back to Admin</a>
-      </div>
-
       {/* Preview Modal */}
       {showPreview && (
         <div style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 999, alignItems: 'center', justifyContent: 'center', padding: 40 }} onClick={(e) => { if (e.target === e.currentTarget) setShowPreview(false); }}>
@@ -319,6 +292,7 @@ export default function AdminCampaignPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
