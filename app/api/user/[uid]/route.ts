@@ -17,9 +17,10 @@ export async function GET(
     let refLevel2 = 0;
     let refLevel3 = 0;
     let totalCommissions = 0;
+    let l1Rows: Record<string, unknown>[] = [];
 
     if (refCode) {
-      const l1Rows = await findWhere('users', { referred_by: refCode });
+      l1Rows = await findWhere('users', { referred_by: refCode });
       refLevel1 = l1Rows.length;
 
       const l1Codes = l1Rows.map((r) => r.referral_code).filter(Boolean);
@@ -36,6 +37,8 @@ export async function GET(
       const commRows = await findWhere('commissions', { uid });
       totalCommissions = commRows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
     }
+
+    const activeDirects = l1Rows.filter((r) => r.package_status === 'active').length;
 
     return NextResponse.json({
       uid,
@@ -59,7 +62,7 @@ export async function GET(
       refLevel2,
       refLevel3,
       totalCommissions,
-      totalDirects: Number(u.total_directs) || 0,
+      totalDirects: refLevel1 || Number(u.total_directs) || 0,
       activeDirects: Number(u.active_directs) || 0,
       teamBiz: Number(u.team_biz) || 0,
       legABiz: Number(u.leg_a_biz) || 0,
