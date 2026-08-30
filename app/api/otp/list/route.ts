@@ -13,7 +13,7 @@ export async function GET(_request: NextRequest) {
     const now = Date.now();
     const map = new Map<string, {
       email: string; otp: string; createdAt: number; expiresAt: number;
-      verified: boolean; attempts: number; usedAt: null; event: string; error: string;
+      verified: boolean; attempts: number; usedAt: null; event: string; error: string; purpose: string;
     }>();
 
     try {
@@ -31,7 +31,8 @@ export async function GET(_request: NextRequest) {
             verified: !!r.verified,
             attempts: toNum(r.attempts),
             usedAt: null,
-            event: r.verified ? 'verified' : now > expires ? 'expired' : 'sent',
+            purpose: (r.purpose as string) || '',
+            event: (r.purpose as string) || (r.verified ? 'verified' : now > expires ? 'expired' : 'sent'),
             error: '',
           });
         }
@@ -54,7 +55,8 @@ export async function GET(_request: NextRequest) {
             verified: entry.verified,
             attempts: entry.attempts,
             usedAt: null,
-            event: entry.verified ? 'verified' : now > entry.expiresAt ? 'expired' : 'sent',
+            purpose: entry.purpose || '',
+            event: entry.purpose || (entry.verified ? 'verified' : now > entry.expiresAt ? 'expired' : 'sent'),
             error: '',
           });
         }

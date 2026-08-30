@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, findWhere } from '@/lib/db';
+import { get, all } from '@/lib/db';
 
 const RANKS = [
   { name: 'Ignition', reqDirect: 3, reqTeam: 1000, reqLeg: 500, bonus: 25, rewardDay: 5, rewardDays: 5 },
@@ -15,35 +15,9 @@ const RANKS = [
 ];
 
 const RANK_INDEX: Record<string, number> = RANKS.reduce(
-  (m, r, i) => {
-    m[r.name] = i;
-    return m;
-  },
+  (m, r, i) => { m[r.name] = i; return m; },
   {} as Record<string, number>
 );
-
-async function getDownlineVolume(refCode: string, depth = 0, maxDepth = 10): Promise<number> {
-  if (depth >= maxDepth || !refCode) return 0;
-  const rows = await findWhere('users', { referred_by: refCode });
-  let vol = 0;
-  for (const u of rows) {
-    vol += (u.total_package_spend as number) || 0;
-    vol += await getDownlineVolume(u.referral_code as string, depth + 1, maxDepth);
-  }
-  return vol;
-}
-
-async function getLegsVolume(refCode: string): Promise<number[]> {
-  if (!refCode) return [];
-  const rows = await findWhere('users', { referred_by: refCode });
-  const legs: number[] = [];
-  for (const u of rows) {
-    const subVol = await getDownlineVolume(u.referral_code as string);
-    legs.push(((u.total_package_spend as number) || 0) + subVol);
-  }
-  legs.sort((a, b) => b - a);
-  return legs;
-}
 
 export async function GET(
   _request: NextRequest,
@@ -57,13 +31,69 @@ export async function GET(
     }
 
     const refCode = user.referral_code as string;
-    const directRows = refCode ? await findWhere('users', { referred_by: refCode }) : [];
+    if (!refCode) {
+      return NextResponse.json({
+        currentRank: (user.rank as string) || 'Unranked',
+        currentRankIndex: -1,
+        directCount: 0,
+        totalTeamVolume: 0,
+        topLeg: 0,
+        otherLegs: 0,
+        weakLeg: 0,
+        legs: [],
+        nextRank: RANKS[0] ? {
+          name: RANKS[0].name,
+          reqDirect: RANKS[0].reqDirect,
+          reqTeam: RANKS[0].reqTeam,
+          reqLeg: RANKS[0].reqLeg,
+          bonus: RANKS[0].bonus,
+          rewardDay: RANKS[0].rewardDay,
+          rewardDays: RANKS[0].rewardDays,
+          directProgress: 0,
+          teamProgress: 0,
+          legProgress: 0,
+        } : null,
+      });
+    }
+
+    const allUsers = await all('users');
+
+    const byRefCode: Record<string, Record<string, unknown>[]> = {};
+    for (const u of allUsers) {
+      const rb = u.referred_by as string;
+      if (rb) {
+        if (!byRefCode[rb]) byRefCode[rb] = [];
+        byRefCode[rb].push(u);
+      }
+    }
+
+    const directRows = byRefCode[refCode] || [];
     const directCount = directRows.length;
-    const legs = await getLegsVolume(refCode);
+
+    function getTeamVolume(code: string, visited: Set<string>): number {
+      if (!code || visited.has(code)) return 0;
+      visited.add(code);
+      const children = byRefCode[code] || [];
+      let vol = 0;
+      for (const child of children) {
+        vol += (child.total_package_spend as number) || 0;
+        vol += getTeamVolume(child.referral_code as string, visited);
+      }
+      return vol;
+    }
+
+    const legs: number[] = [];
+    for (const direct of directRows) {
+      const visited = new Set<string>([refCode]);
+      const childVol = getTeamVolume(direct.referral_code as string, visited);
+      legs.push(((direct.total_package_spend as number) || 0) + childVol);
+    }
+    legs.sort((a, b) => b - a);
+
     const totalTeamVolume = legs.reduce((a, b) => a + b, 0);
     const topLeg = legs[0] || 0;
     const otherLegs = totalTeamVolume - topLeg;
-    const weakLeg = Math.min(topLeg, otherLegs);
+    const weakLeg = legs.length > 1 ? legs[legs.length - 1] : 0;
 
     const currentRank = (user.rank as string) || 'Unranked';
     const currentIdx = RANK_INDEX[currentRank] !== undefined ? RANK_INDEX[currentRank] : -1;

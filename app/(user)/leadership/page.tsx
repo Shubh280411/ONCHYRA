@@ -32,13 +32,24 @@ export default function LeadershipPage() {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    if (!apiUrl || !uid) return;
+    if (!uid) { setLoading(false); return; }
     setLoading(true);
     try {
       const res = await fetch(`${apiUrl}/api/leadership/progress/${uid}`);
       if (res.ok) {
         const data = await res.json();
-        setProgress(data);
+        const nextRankObj = data.nextRank;
+        setProgress({
+          currentRank: data.currentRank || 'Unranked',
+          totalDirects: data.directCount || 0,
+          teamBiz: data.totalTeamVolume || 0,
+          dailyReward: 0,
+          nextRank: nextRankObj ? nextRankObj.name : null,
+          nextRankDirects: nextRankObj ? nextRankObj.reqDirect : 0,
+          nextRankTeamBiz: nextRankObj ? nextRankObj.reqTeam : 0,
+          progressDirects: data.directCount || 0,
+          progressTeamBiz: data.totalTeamVolume || 0,
+        });
       }
     } catch {}
     setLoading(false);
@@ -65,48 +76,8 @@ export default function LeadershipPage() {
     : 0;
 
   return (
-    <div style={{
-      fontFamily: INTER,
-      background: '#03040a',
-      color: 'white',
-      minHeight: '100vh',
-      padding: '16px',
-      paddingBottom: 50,
-      backgroundImage: 'radial-gradient(ellipse at 50% 0%, rgba(251,191,36,0.06) 0%, transparent 60%)',
-    }}>
+    <div style={{ paddingBottom: 50 }}>
       {ToastComponent}
-
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-        paddingTop: 8,
-      }}>
-        <Link
-          href="/dashboard"
-          style={{
-            width: 38,
-            height: 38,
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textDecoration: 'none',
-          }}
-        >
-          <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-        </Link>
-        <div style={{ fontFamily: SG, fontSize: 15, fontWeight: 800, letterSpacing: 2, color: 'rgba(255,255,255,0.8)' }}>
-          LEADERSHIP
-        </div>
-        <div style={{ width: 38 }} />
-      </div>
 
       {/* Subtitle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>

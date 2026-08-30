@@ -14,3 +14,6 @@ if (process.env.GMAIL_USER && transporter.mailSettings) {
 }
 
 export default transporter;
+
+const otpTransporter: MailTransporter = createTransporter('otp');
+export { otpTransporter };

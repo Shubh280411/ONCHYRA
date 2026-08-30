@@ -63,7 +63,7 @@ export async function GET(
       refLevel3,
       totalCommissions,
       totalDirects: refLevel1 || Number(u.total_directs) || 0,
-      activeDirects: Number(u.active_directs) || 0,
+      activeDirects,
       teamBiz: Number(u.team_biz) || 0,
       legABiz: Number(u.leg_a_biz) || 0,
       legBBiz: Number(u.leg_b_biz) || 0,
@@ -74,6 +74,11 @@ export async function GET(
           ? JSON.parse(u.purchased_packages as string)
           : u.purchased_packages
         : [],
+      banned: !!u.banned,
+      banReason: u.ban_reason || '',
+      roiEnabled: u.roi_enabled === true,
+      onxBalance: Number(u.onx_balance) || 0,
+      onxClaimed: u.onx_claimed === true,
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

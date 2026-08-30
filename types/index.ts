@@ -31,6 +31,8 @@ export interface User {
   legABiz: number;
   legBBiz: number;
   createdAt: number;
+  onxBalance: number;
+  onxClaimed: boolean;
   verifiedLeader?: boolean;
   leaderStatus?: string;
   purchasedPackages?: PackagePurchase[];
@@ -182,13 +184,13 @@ export interface TeamMember {
 }
 
 export const PACKAGES: Package[] = [
-  { id: 'starter', name: 'Starter', price: 5, boost: 1.0, cap: 50 },
-  { id: 'builder', name: 'Builder', price: 10, boost: 1.5, cap: 150 },
-  { id: 'pioneer', name: 'Pioneer', price: 25, boost: 2.0, cap: 500 },
-  { id: 'elite', name: 'Elite', price: 50, boost: 3.0, cap: 1500 },
-  { id: 'titan', name: 'Titan', price: 100, boost: 4.0, cap: 4000 },
-  { id: 'dominion', name: 'Dominion', price: 250, boost: 5.0, cap: 12500 },
-  { id: 'legacy', name: 'Legacy', price: 500, boost: 7.0, cap: 35000 },
+  { id: 'starter', name: 'Starter', price: 5, boost: 4, cap: 50 },
+  { id: 'builder', name: 'Builder', price: 10, boost: 8, cap: 100 },
+  { id: 'pioneer', name: 'Pioneer', price: 25, boost: 15, cap: 250 },
+  { id: 'elite', name: 'Elite', price: 50, boost: 30, cap: 500 },
+  { id: 'titan', name: 'Titan', price: 100, boost: 60, cap: 1000 },
+  { id: 'dominion', name: 'Dominion', price: 250, boost: 120, cap: 2500 },
+  { id: 'legacy', name: 'Legacy', price: 500, boost: 300, cap: 5000 },
 ];
 
 export const RANKS = [

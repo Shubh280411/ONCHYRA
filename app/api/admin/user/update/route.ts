@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { update, get } from '@/lib/db';
+import { set, get } from '@/lib/db';
 import { camelToSnake } from '@/lib/utils';
 
 async function requireAdmin(request: NextRequest) {
@@ -18,8 +18,11 @@ export async function POST(request: NextRequest) {
     const { uid, updates } = await request.json();
     if (!uid || !updates) return NextResponse.json({ error: 'Missing uid or updates' }, { status: 400 });
 
+    const existing = await get('users', uid);
+    if (!existing) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
     const dbUpdates = camelToSnake(updates as Record<string, unknown>);
-    await update('users', uid, dbUpdates);
+    await set('users', uid, { ...existing, ...dbUpdates }, 'uid');
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

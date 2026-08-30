@@ -66,9 +66,9 @@ export default function ReferralsPage() {
   const l2 = userData?.refLevel2 || 0;
   const l3 = userData?.refLevel3 || 0;
   const totalNetwork = l1 + l2 + l3;
-  const l1Onc = l1 * 0.25;
-  const l2Onc = l2 * 0.10;
-  const l3Onc = l3 * 0.05;
+  const l1Onc = l1 * 0.10;
+  const l2Onc = l2 * 0.05;
+  const l3Onc = l3 * 0.03;
   const totalOnc = l1Onc + l2Onc + l3Onc;
   const totalBiz = legStats?.teamBiz ?? userData?.teamBiz ?? 0;
   const legABiz = legStats?.legABiz ?? userData?.legABiz ?? 0;
@@ -188,149 +188,141 @@ export default function ReferralsPage() {
   }
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
-      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <style>{`
+        .ref-hero-stats{display:grid;grid-template-columns:1fr;gap:14px}
+        .ref-stats4{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        @media(min-width:768px){
+          .ref-hero-stats{grid-template-columns:340px 1fr}
+          .ref-stats4{grid-template-columns:repeat(4,1fr)}
+        }
+      `}</style>
+      <div style={{ width: '100%', maxWidth: 960, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {ToastComponent}
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 22, padding: '14px 16px' }}>
-          <Link href="/dashboard" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, cursor: 'pointer', color: 'white', textDecoration: 'none', flexShrink: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-          </Link>
-          <span style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flex: 1 }}>
-            ONCHYRA
-          </span>
-          <div style={{ width: 36 }} />
-        </div>
-
-        {/* Referral hero */}
-        <div style={{ background: 'linear-gradient(135deg,rgba(167,139,250,0.1),rgba(96,165,250,0.05))', border: '1px solid rgba(167,139,250,0.12)', borderRadius: 24, padding: '24px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'rgba(167,139,250,0.08)', filter: 'blur(40px)', pointerEvents: 'none' }} />
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: 'rgba(255,255,255,0.25)' }}>Your Referral Code</div>
-          <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 32, letterSpacing: 6, marginTop: 6, marginBottom: 6, background: 'linear-gradient(135deg,#fff 20%,rgba(167,139,250,0.6))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            {userData?.referralCode || '---'}
+        {/* Hero + Stats 1 side by side on desktop */}
+        <div className="ref-hero-stats">
+          {/* Referral hero */}
+          <div style={{ background: 'linear-gradient(135deg,rgba(167,139,250,0.1),rgba(96,165,250,0.05))', border: '1px solid rgba(167,139,250,0.12)', borderRadius: 24, padding: '24px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'rgba(167,139,250,0.08)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: 'rgba(255,255,255,0.25)' }}>Your Referral Code</div>
+            <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 32, letterSpacing: 6, marginTop: 6, marginBottom: 6, background: 'linear-gradient(135deg,#fff 20%,rgba(167,139,250,0.6))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              {userData?.referralCode || '---'}
+            </div>
+            <button onClick={copyLink} style={{ width: '100%', padding: 14, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontWeight: 900, fontSize: 13, cursor: 'pointer', fontFamily: "'Inter'", marginTop: 12 }}>
+              COPY INVITE LINK
+            </button>
           </div>
-          <button onClick={copyLink} style={{ width: '100%', padding: 14, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontWeight: 900, fontSize: 13, cursor: 'pointer', fontFamily: "'Inter'", marginTop: 12 }}>
-            COPY INVITE LINK
-          </button>
-        </div>
 
-        {loadingStats ? (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '32px 0' }}>
-            <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.05)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          </div>
-        ) : (
-          <>
-            {/* Stats grid 1 */}
-            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(167,139,250,0.12)' }}>
-                    <svg width="20" height="20" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{totalNetwork}</div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Network</div>
-                  </div>
+          {/* Stats 1 */}
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 16 }}>
+            <div className="ref-stats4">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(167,139,250,0.12)' }}>
+                  <svg width="20" height="20" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(96,165,250,0.12)' }}>
-                    <svg width="20" height="20" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(totalBiz)}</div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Business</div>
-                  </div>
+                <div>
+                  <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{totalNetwork}</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Network</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(245,158,11,0.12)' }}>
-                    <svg width="20" height="20" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{totalOnc.toFixed(2)} ONC</div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>ONC Bonus</div>
-                  </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(96,165,250,0.12)' }}>
+                  <svg width="20" height="20" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(34,197,94,0.12)' }}>
-                    <svg width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(userData?.totalCommissions || 0)}</div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Commission</div>
-                  </div>
+                <div>
+                  <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(totalBiz)}</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Business</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(245,158,11,0.12)' }}>
+                  <svg width="20" height="20" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                </div>
+                <div>
+                  <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{totalOnc.toFixed(2)} ONC</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>ONC Bonus</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(34,197,94,0.12)' }}>
+                  <svg width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+                </div>
+                <div>
+                  <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(userData?.totalCommissions || 0)}</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Commission</div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Stats grid 2 */}
-            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(167,139,250,0.12)' }}>
-                    <svg width="20" height="20" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{activeDirects}/{totalDirects}</div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Active / Total Direct</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(34,197,94,0.12)' }}>
-                    <svg width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(legABiz)}</div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Leg A</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(245,158,11,0.12)' }}>
+        {/* Stats grid 2 */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 16 }}>
+          <div className="ref-stats4">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(167,139,250,0.12)' }}>
+                <svg width="20" height="20" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{activeDirects}/{totalDirects}</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Active / Total Direct</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(34,197,94,0.12)' }}>
+                <svg width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(legABiz)}</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Leg A</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(245,158,11,0.12)' }}>
                     <svg width="20" height="20" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(legBBiz)}</div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Leg B</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(34,197,94,0.12)' }}>
-                    <svg width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>
-                      <span>{today.onc.toFixed(2)} ONC</span>
-                      <span style={{ fontSize: 9, opacity: 0.2 }}>|</span>
-                      <span>{formatUSD(today.usdt)}</span>
-                    </div>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Today&apos;s Earnings</div>
-                  </div>
-                </div>
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>{formatUSD(legBBiz)}</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Leg B</div>
               </div>
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, border: 'none', background: 'transparent', padding: 8 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(34,197,94,0.12)' }}>
+                <svg width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              </div>
+              <div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 17 }}>
+                  <span>{today.onc.toFixed(2)} ONC</span>
+                  <span style={{ fontSize: 9, opacity: 0.2 }}>|</span>
+                  <span>{formatUSD(today.usdt)}</span>
+                </div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Today&apos;s Earnings</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            {/* Level breakdown */}
-            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 16 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Level Breakdown</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
-                <span><span style={{ color: '#a78bfa', fontWeight: 800 }}>Vanguard</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>(L1)</span></span>
-                <span>{l1} users - {l1Onc.toFixed(2)} ONC</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
-                <span><span style={{ color: '#60a5fa', fontWeight: 800 }}>Guardians</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>(L2)</span></span>
-                <span>{l2} users - {l2Onc.toFixed(2)} ONC</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: 'none', fontSize: 12 }}>
-                <span><span style={{ color: '#f59e0b', fontWeight: 800 }}>Seekers</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>(L3)</span></span>
-                <span>{l3} users - {l3Onc.toFixed(2)} ONC</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0 0', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 4 }}>
-                <span style={{ fontWeight: 800 }}>Total</span>
-                <span>{totalNetwork} users - {totalOnc.toFixed(2)} ONC</span>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Level breakdown */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Level Breakdown</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+            <span><span style={{ color: '#a78bfa', fontWeight: 800 }}>Vanguard</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>(L1)</span></span>
+            <span>{l1} users - {l1Onc.toFixed(2)} ONC</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
+            <span><span style={{ color: '#60a5fa', fontWeight: 800 }}>Guardians</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>(L2)</span></span>
+            <span>{l2} users - {l2Onc.toFixed(2)} ONC</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: 'none', fontSize: 12 }}>
+            <span><span style={{ color: '#f59e0b', fontWeight: 800 }}>Seekers</span> <span style={{ color: 'rgba(255,255,255,0.3)' }}>(L3)</span></span>
+            <span>{l3} users - {l3Onc.toFixed(2)} ONC</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0 0', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 4 }}>
+            <span style={{ fontWeight: 800 }}>Total</span>
+            <span>{totalNetwork} users - {totalOnc.toFixed(2)} ONC</span>
+          </div>
+        </div>
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 6 }}>

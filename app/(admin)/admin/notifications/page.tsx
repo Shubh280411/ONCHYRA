@@ -197,6 +197,11 @@ export default function AdminNotificationsPage() {
                 <option value="update">Update</option>
                 <option value="poll">Poll</option>
                 <option value="personal">Personal</option>
+                <option value="system">System</option>
+                <option value="warning">Warning</option>
+                <option value="danger">Danger</option>
+                <option value="success">Success</option>
+                <option value="info">Info</option>
               </select>
 
               <label style={labelStyle}>TITLE</label>

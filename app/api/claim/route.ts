@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { get, update, increment } from '@/lib/db';
+import { get, set, update } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,8 +37,19 @@ export async function POST(request: NextRequest) {
       total_claimed: (Number(user.total_claimed || user.totalclaimed) || 0) + claimAmount,
       last_claim: now,
       streak: newStreak,
-      streak_days: newStreak,
     });
+
+    // Save claim history for analytics
+    try {
+      const claimId = crypto.randomUUID();
+      await set('claims', claimId, {
+        user_id: uid,
+        amount: claimAmount,
+        balance_after: newBalance,
+        streak: newStreak,
+        created_at: now,
+      });
+    } catch { /* */ }
 
     return NextResponse.json({ success: true, claimed: claimAmount, balance: newBalance, streak: newStreak });
   } catch (e: unknown) {

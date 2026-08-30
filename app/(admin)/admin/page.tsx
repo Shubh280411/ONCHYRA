@@ -17,6 +17,11 @@ interface Stats {
   totalVolume: number;
   revenue: number;
   activePackages: number;
+  todayRegistrations: number;
+  todayDeposits: number;
+  todayWithdrawals: number;
+  todayRewards: number;
+  rankCounts: Record<string, number>;
 }
 
 interface User {
@@ -41,6 +46,8 @@ export default function AdminDashboardPage() {
   const [cleanupDone, setCleanupDone] = useState(false);
   const [recalcRunning, setRecalcRunning] = useState(false);
   const [recalcDone, setRecalcDone] = useState(false);
+  const [maintenanceOn, setMaintenanceOn] = useState(false);
+  const [maintToggling, setMaintToggling] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -50,7 +57,7 @@ export default function AdminDashboardPage() {
 
   async function loadAll() {
     setLoading(true);
-    await Promise.allSettled([loadStats(), loadUsers()]);
+    await Promise.allSettled([loadStats(), loadUsers(), loadMaintenance()]);
     setLoading(false);
   }
 
@@ -83,6 +90,31 @@ export default function AdminDashboardPage() {
         setUsers(list);
       }
     } catch {}
+  }
+
+  async function loadMaintenance() {
+    try {
+      const apiUrl = detectApiUrl();
+      const res = await fetch(`${apiUrl}/api/maintenance`);
+      if (res.ok) {
+        const data = await res.json();
+        setMaintenanceOn(!!data.enabled);
+      }
+    } catch {}
+  }
+
+  async function toggleMaintenance() {
+    setMaintToggling(true);
+    try {
+      const apiUrl = detectApiUrl();
+      const res = await fetch(`${apiUrl}/api/maintenance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-auth-uid': uid! },
+        body: JSON.stringify({ enabled: !maintenanceOn, message: 'System is under maintenance. Please try again later.' }),
+      });
+      if (res.ok) setMaintenanceOn(!maintenanceOn);
+    } catch {}
+    setMaintToggling(false);
   }
 
   async function runCleanup() {
@@ -216,6 +248,76 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
               <div style={{ ...valueStyle, color: '#22c55e' }}>${(stats?.revenue ?? stats?.packageSales ?? 0).toLocaleString()}</div>
+            </div>
+
+            {/* Today's Registrations */}
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ ...labelStyle, marginBottom: 0 }}>Today Signups</div>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(96,165,250,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                </div>
+              </div>
+              <div style={{ ...valueStyle, color: '#60a5fa' }}>{stats?.todayRegistrations ?? 0}</div>
+            </div>
+
+            {/* Today's Deposits */}
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ ...labelStyle, marginBottom: 0 }}>Today Deposits</div>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+              </div>
+              <div style={{ ...valueStyle, color: '#22c55e' }}>{stats?.todayDeposits ?? 0} ONC</div>
+            </div>
+
+            {/* Today's Rewards */}
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ ...labelStyle, marginBottom: 0 }}>Today Rewards</div>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(167,139,250,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+              </div>
+              <div style={{ ...valueStyle, color: '#a78bfa' }}>{stats?.todayRewards ?? 0} ONC</div>
+            </div>
+
+            {/* Maintenance Toggle */}
+            <div
+              onClick={() => !maintToggling && toggleMaintenance()}
+              style={{
+                ...cardStyle, cursor: maintToggling ? 'not-allowed' : 'pointer',
+                borderColor: maintenanceOn ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.2)',
+                background: maintenanceOn ? 'rgba(239,68,68,0.06)' : 'rgba(34,197,94,0.04)',
+                opacity: maintToggling ? 0.6 : 1,
+                transition: 'all 0.2s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ ...labelStyle, marginBottom: 0, color: maintenanceOn ? 'rgba(239,68,68,0.6)' : 'rgba(34,197,94,0.5)' }}>Maintenance</div>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: maintenanceOn ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={maintenanceOn ? '#ef4444' : '#22c55e'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  width: 36, height: 20, borderRadius: 10,
+                  background: maintenanceOn ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.3)',
+                  border: `2px solid ${maintenanceOn ? '#ef4444' : '#22c55e'}`,
+                  position: 'relative', transition: 'all 0.3s',
+                }}>
+                  <div style={{
+                    width: 14, height: 14, borderRadius: '50%',
+                    background: maintenanceOn ? '#ef4444' : '#22c55e',
+                    position: 'absolute', top: 1,
+                    left: maintenanceOn ? 18 : 1, transition: 'all 0.3s',
+                  }} />
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 700, color: maintenanceOn ? '#ef4444' : '#22c55e' }}>
+                  {maintenanceOn ? 'SITE IS DOWN' : 'SITE IS LIVE'}
+                </span>
+              </div>
             </div>
           </div>
 

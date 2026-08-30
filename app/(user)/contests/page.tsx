@@ -118,16 +118,8 @@ export default function ContestsPage() {
   if (loading) return <Loading text="Loading contests..." />;
 
   return (
-    <div style={{ fontFamily: INTER, background: '#03040a', color: 'white', minHeight: '100vh', padding: '16px', paddingBottom: 50, backgroundImage: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.08) 0%, transparent 60%)' }}>
+    <div style={{ paddingBottom: 50 }}>
       {ToastComponent}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingTop: 8 }}>
-        <Link href="/dashboard" style={{ width: 38, height: 38, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-          <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </Link>
-        <div style={{ fontFamily: SG, fontSize: 15, fontWeight: 800, letterSpacing: 2, color: 'rgba(255,255,255,0.8)' }}>CONTESTS</div>
-        <div style={{ width: 38 }} />
-      </div>
 
       <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', backdropFilter: 'blur(10px)', padding: 12, borderRadius: 14, marginBottom: 20, fontSize: 11, textAlign: 'center', color: '#fca5a5' }}>
         <strong>FAIRNESS NOTICE:</strong> Only new referrals joined AFTER your registration will be counted. Purging fake accounts will lead to permanent ban.

@@ -143,16 +143,8 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div style={{ fontFamily: INTER, background: '#03040a', color: 'white', padding: '16px', paddingBottom: 50, backgroundImage: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.12) 0%, transparent 60%)', minHeight: '100vh' }}>
+    <div style={{ paddingBottom: 50 }}>
       {ToastComponent}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingTop: 8 }}>
-        <Link href="/dashboard" style={{ width: 38, height: 38, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-          <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </Link>
-        <div style={{ fontFamily: SG, fontSize: 15, fontWeight: 800, letterSpacing: 2, color: 'rgba(255,255,255,0.8)' }}>MY NODE</div>
-        <div style={{ width: 38 }} />
-      </div>
 
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <div style={{ width: 86, height: 86, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #60a5fa)', margin: '0 auto 14px', padding: 2, boxShadow: '0 0 30px rgba(167,139,250,0.3)' }}>

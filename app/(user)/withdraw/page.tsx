@@ -146,7 +146,7 @@ export default function WithdrawPage() {
   }
 
   return (
-    <div style={{ fontFamily: INTER, background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {ToastComponent}
 
       <style>{`
@@ -155,20 +155,6 @@ export default function WithdrawPage() {
         @keyframes loaderAnim{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
         @keyframes spin{to{transform:rotate(360deg)}}
       `}</style>
-
-      {/* phone-frame */}
-      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-        {/* header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 22, padding: '14px 16px' }}>
-          <Link href="/dashboard" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, cursor: 'pointer', color: 'white', textDecoration: 'none', flexShrink: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-          </Link>
-          <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flex: 1 }}>ONCHYRA</div>
-          <div style={{ fontSize: 11, fontWeight: 700, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.15)', padding: '6px 14px', borderRadius: 100, whiteSpace: 'nowrap' as const }}>
-            Commission <span style={{ fontFamily: SG, color: '#a78bfa' }}>{formatUSD(balance)}</span>
-          </div>
-        </div>
 
         {/* page title */}
         <div>
@@ -322,8 +308,6 @@ export default function WithdrawPage() {
             })
           )}
         </div>
-
-      </div>
     </div>
   );
 }

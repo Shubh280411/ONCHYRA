@@ -48,9 +48,11 @@ export default function AdminLoginPage() {
       <div style={{ width: 360, padding: 40, borderRadius: 18, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
         {/* Logo */}
         <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'center' }}>
-          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <SvgLock />
-          </div>
+          <img
+            src="/omchyra-logo.png"
+            alt="ONCHYRA"
+            style={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 16 }}
+          />
         </div>
 
         <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 800, marginBottom: 24, background: 'linear-gradient(90deg, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>

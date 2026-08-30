@@ -14,18 +14,27 @@ interface AdminLayoutProps {
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: 'grid' },
   { href: '/admin/users', label: 'Users', icon: 'people' },
-  { href: '/admin/withdrawals', label: 'Withdrawals', icon: 'wallet' },
-  { href: '/admin/stats', label: 'Analytics', icon: 'chart' },
-  { href: '/admin/campaign', label: 'Campaigns', icon: 'mail' },
+  { href: '/admin/bans', label: 'Bans', icon: 'ban' },
+  { href: '/admin/analytics', label: 'Analytics', icon: 'chart' },
+  { href: '/admin/announcements', label: 'Announcements', icon: 'megaphone' },
   { href: '/admin/notifications', label: 'Notifications', icon: 'bell' },
-  { href: '/admin/contest', label: 'Contests', icon: 'trophy' },
-  { href: '/admin/predictions', label: 'Predictions', icon: 'trending' },
-  { href: '/admin/polls', label: 'Polls', icon: 'poll' },
+  { href: '/admin/popups', label: 'Popups', icon: 'popup' },
+  { href: '/admin/otps', label: 'OTPs', icon: 'lock' },
+  { href: '/admin/emails', label: 'Email Extractor', icon: 'mail' },
+  { href: '/admin/withdrawals', label: 'Withdrawals', icon: 'wallet' },
+  { href: '/admin/p2p', label: 'P2P Transfers', icon: 'send' },
   { href: '/admin/leaders', label: 'Leader Management', icon: 'star' },
+  { href: '/admin/updates', label: 'Updates', icon: 'newspaper' },
+  { href: '/admin/deposits', label: 'Sweep', icon: 'coins' },
+  { href: '/admin/onx-withdrawals', label: 'ONX Withdrawals', icon: 'onxwd' },
+  { href: '/admin/packages', label: 'Packages', icon: 'box' },
+  { href: '/admin/polls', label: 'Polls', icon: 'poll' },
+  { href: '/admin/maintenance', label: 'Maintenance', icon: 'wrench' },
+  { href: '/admin/support', label: 'Support', icon: 'chat' },
 ] as const;
 
 function NavIcon({ icon, size = 18 }: { icon: string; size?: number }) {
-  const s = { width: size, height: size, flexShrink: 0 };
+  const s = { width: size, height: size, style: { flexShrink: 0 } };
   const base = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
   switch (icon) {
@@ -49,6 +58,28 @@ function NavIcon({ icon, size = 18 }: { icon: string; size?: number }) {
       return <svg {...s} viewBox="0 0 24 24" {...base}><rect x="3" y="12" width="4" height="9" rx="1" /><rect x="10" y="7" width="4" height="14" rx="1" /><rect x="17" y="3" width="4" height="18" rx="1" /></svg>;
     case 'star':
       return <svg {...s} viewBox="0 0 24 24" {...base}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
+    case 'newspaper':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" /><path d="M18 14h-8" /><path d="M15 18h-5" /><path d="M10 6h8v4h-8V6Z" /></svg>;
+    case 'coins':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><circle cx="8" cy="8" r="6" /><path d="M18.09 10.37A6 6 0 1 1 10.34 18" /><path d="M7 6h1v4" /><path d="m16.71 13.88.7.71-2.82 2.82" /></svg>;
+    case 'box':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></svg>;
+    case 'wrench':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z" /></svg>;
+    case 'lock':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>;
+    case 'send':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>;
+    case 'megaphone':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><path d="M3 11l18-5v12L3 13v-2z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></svg>;
+    case 'ban':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></svg>;
+    case 'popup':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8" /><path d="M12 17v4" /><path d="M9 10h6" /><path d="M12 7v6" /></svg>;
+    case 'chat':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>;
+    case 'onxwd':
+      return <svg {...s} viewBox="0 0 24 24" {...base}><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>;
     default:
       return null;
   }
@@ -114,8 +145,6 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     return pathname.startsWith(href);
   };
 
-  const sidebarWidth = 240;
-
   return (
     <>
       <style>{`
@@ -126,29 +155,29 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.2); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(167,139,250,0.35); }
+
+        .admin-overlay { display: none; }
+        .admin-hamburger { display: none; }
+
         @media (max-width: 768px) {
-          .admin-sidebar { transform: translateX(-100%) !important; }
+          .admin-overlay { display: block !important; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 99; }
+          .admin-hamburger { display: flex !important; }
+          .admin-sidebar { transform: translateX(-100%) !important; width: 260px !important; }
           .admin-sidebar.open { transform: translateX(0) !important; }
           .admin-main { margin-left: 0 !important; }
-          .admin-topbar { left: 0 !important; }
+          .admin-main .adm-pad { padding: 14px !important; }
+          .admin-topbar { left: 0 !important; right: 0 !important; height: 52px !important; padding: 0 14px !important; }
+          .admin-topbar h1 { font-size: 15px !important; }
+          .admin-email-badge { display: none !important; }
+        }
+        @media (min-width: 769px) {
+          .admin-overlay { display: none !important; }
+          .admin-hamburger { display: none !important; }
         }
       `}</style>
 
       {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 99,
-            display: 'none',
-          }}
-          className="admin-overlay"
-        />
-      )}
+      {sidebarOpen && <div className="admin-overlay" onClick={() => setSidebarOpen(false)} />}
 
       {/* Sidebar */}
       <aside
@@ -157,7 +186,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           position: 'fixed',
           top: 0,
           left: 0,
-          width: sidebarWidth,
+          width: 240,
           height: '100vh',
           background: '#0a0b14',
           borderRight: '1px solid rgba(167,139,250,0.15)',
@@ -170,37 +199,14 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         }}
       >
         {/* Logo */}
-        <div style={{ padding: '28px 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: "'Space Grotesk', sans-serif",
-              fontWeight: 900,
-              fontSize: 15,
-              color: '#000',
-              letterSpacing: -0.5,
-            }}>
-              ON
-            </div>
+        <div style={{ padding: '24px 16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/omchyra-logo.png" alt="ONCHYRA" style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }} />
             <div>
-              <div style={{
-                fontFamily: "'Space Grotesk', sans-serif",
-                fontSize: 18,
-                fontWeight: 800,
-                letterSpacing: -0.5,
-                background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}>
+              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 800, background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 ONCHYRA
               </div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 1 }}>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase' as const, marginTop: 1 }}>
                 Admin Panel
               </div>
             </div>
@@ -208,7 +214,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <nav style={{ flex: 1, padding: '10px 6px', display: 'flex', flexDirection: 'column', gap: 1 }}>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href);
             return (
@@ -218,44 +224,19 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
-                  padding: '10px 14px',
-                  borderRadius: 10,
+                  gap: 10,
+                  padding: '9px 12px',
+                  borderRadius: 8,
                   textDecoration: 'none',
                   color: active ? '#a78bfa' : 'rgba(255,255,255,0.5)',
                   background: active ? 'rgba(167,139,250,0.08)' : 'transparent',
                   borderLeft: active ? '3px solid #a78bfa' : '3px solid transparent',
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: active ? 700 : 500,
                   transition: 'all 0.15s ease',
-                  position: 'relative',
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)';
-                    (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.8)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
-                    (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)';
-                  }
                 }}
               >
-                {active && (
-                  <div style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 3,
-                    height: '60%',
-                    borderRadius: '0 3px 3px 0',
-                    background: 'linear-gradient(180deg, #a78bfa, #60a5fa)',
-                  }} />
-                )}
-                <NavIcon icon={item.icon} />
+                <NavIcon icon={item.icon} size={16} />
                 <span>{item.label}</span>
               </Link>
             );
@@ -263,33 +244,18 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         </nav>
 
         {/* Logout */}
-        <div style={{ padding: '12px 8px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ padding: '10px 6px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <button
             onClick={handleLogout}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              width: '100%',
-              padding: '10px 14px',
-              border: 'none',
-              borderRadius: 10,
-              background: 'rgba(239,68,68,0.06)',
-              color: '#ef4444',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              padding: '9px 12px', border: 'none', borderRadius: 8,
+              background: 'rgba(239,68,68,0.06)', color: '#ef4444',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
               fontFamily: "'Inter', sans-serif",
             }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.12)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.06)';
-            }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
@@ -300,98 +266,46 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <div
-        className="admin-main"
-        style={{
-          marginLeft: sidebarWidth,
-          minHeight: '100vh',
-          background: '#05060f',
-          transition: 'margin-left 0.3s cubic-bezier(0.4,0,0.2,1)',
-        }}
-      >
+      <div className="admin-main" style={{ marginLeft: 240, minHeight: '100vh', background: '#05060f' }}>
         {/* Top bar */}
-        <header
-          className="admin-topbar"
-          style={{
-            position: 'sticky',
-            top: 0,
-            left: sidebarWidth,
-            right: 0,
-            height: 64,
-            background: 'rgba(5,6,15,0.85)',
-            backdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 28px',
-            zIndex: 50,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            {/* Hamburger for mobile */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              style={{
-                display: 'none',
-                background: 'none',
-                border: 'none',
-                color: 'rgba(255,255,255,0.6)',
-                cursor: 'pointer',
-                padding: 6,
-                borderRadius: 8,
-              }}
-              className="admin-hamburger"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <header className="admin-topbar" style={{
+          position: 'sticky', top: 0, left: 240, right: 0, height: 64,
+          background: 'rgba(5,6,15,0.85)', backdropFilter: 'blur(16px)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 24px', zIndex: 50,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="admin-hamburger" style={{
+              background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)',
+              cursor: 'pointer', padding: 6, borderRadius: 8,
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <line x1="3" y1="12" x2="21" y2="12" />
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
-            <h1 style={{
-              fontFamily: "'Space Grotesk', sans-serif",
-              fontSize: 20,
-              fontWeight: 700,
-              letterSpacing: -0.3,
-            }}>
+            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, letterSpacing: -0.3 }}>
               {title}
             </h1>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {/* Admin email badge */}
-            <div style={{
-              padding: '5px 14px',
-              borderRadius: 100,
-              fontSize: 11,
-              fontWeight: 600,
-              background: 'rgba(167,139,250,0.08)',
-              color: '#a78bfa',
-              border: '1px solid rgba(167,139,250,0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
-              {adminEmail}
-            </div>
+          <div className="admin-email-badge" style={{
+            padding: '4px 12px', borderRadius: 100, fontSize: 10, fontWeight: 600,
+            background: 'rgba(167,139,250,0.08)', color: '#a78bfa',
+            border: '1px solid rgba(167,139,250,0.12)',
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
+            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e' }} />
+            {adminEmail}
           </div>
         </header>
 
         {/* Page content */}
-        <main style={{ padding: '28px' }}>
+        <main className="adm-pad" style={{ padding: '24px' }}>
           {children}
         </main>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .admin-overlay { display: block !important; }
-          .admin-hamburger { display: block !important; }
-          .admin-topbar { left: 0 !important; }
-        }
-      `}</style>
     </>
   );
 }

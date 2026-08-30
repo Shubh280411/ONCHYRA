@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       index,
       used: false,
       created_at: Date.now(),
-    });
+    }, 'id');
 
     console.log(`[HD] Generated address ${address} for uid=${uid} network=${network} index=${index}`);
     return NextResponse.json({ address, network, index });

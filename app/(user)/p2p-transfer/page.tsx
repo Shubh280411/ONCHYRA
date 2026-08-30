@@ -26,12 +26,14 @@ export default function P2PTransferPage() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lookupTimeout, setLookupTimeoutState] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [todayCount, setTodayCount] = useState(0);
+  const [history, setHistory] = useState<Record<string, unknown>[]>([]);
 
   const amountNum = useMemo(() => parseFloat(amount) || 0, [amount]);
   const burn = useMemo(() => amountNum * 0.1, [amountNum]);
   const receive = useMemo(() => amountNum - burn, [amountNum, burn]);
 
-  const canSend = uid && recipientId && amountNum >= 1 && amountNum <= 500 && amountNum <= balance;
+  const canSend = uid && recipientId && amountNum >= 1 && amountNum <= 500 && amountNum <= balance && todayCount < 3;
 
   const loadData = useCallback(async () => {
     try {
@@ -40,6 +42,17 @@ export default function P2PTransferPage() {
         const d = await userRes.json();
         setBalance(Number(d.balance) || 0);
       }
+      try {
+        const tRes = await fetch(`${apiUrl}/api/p2p/history?uid=${uid}`);
+        if (tRes.ok) {
+          const tData = await tRes.json();
+          const myTransfers = tData.transfers || [];
+          const now = Date.now();
+          const today = myTransfers.filter((t: Record<string, unknown>) => t.from_uid === uid && Number(t.created_at) > now - 86400000);
+          setTodayCount(today.length);
+          setHistory(myTransfers.slice(0, 20));
+        }
+      } catch { /* */ }
     } catch { /* silent */ }
     setLoading(false);
   }, [apiUrl, uid]);
@@ -49,7 +62,7 @@ export default function P2PTransferPage() {
       const res = await fetch(`${apiUrl}/api/check-referral/${code}`);
       if (!res.ok) throw new Error('Not found');
       const data = await res.json();
-      if (!data.found) {
+      if (!data.valid) {
         setLookupStatus('error');
         setLookupText('Network ID not found');
         return;
@@ -100,7 +113,7 @@ export default function P2PTransferPage() {
       const res = await fetch(`${apiUrl}/api/transfer/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fromUid: uid, referralCode: recipientCode.trim().toUpperCase(), amount: amountNum }),
+        body: JSON.stringify({ fromUid: uid, referralCode: recipientCode.trim().toUpperCase(), amount: amountNum, note: note.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Transfer failed');
@@ -138,16 +151,8 @@ export default function P2PTransferPage() {
   if (loading) return <Loading text="Securing channel..." />;
 
   return (
-    <div style={{ fontFamily: INTER, background: '#03040a', color: 'white', minHeight: '100vh', padding: '20px 16px', maxWidth: 420, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {ToastComponent}
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '12px 16px' }}>
-        <Link href="/dashboard" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'white', textDecoration: 'none', flexShrink: 0 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-        </Link>
-        <span style={{ fontFamily: SG, fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flex: 1 }}>ONCHYRA</span>
-        <span style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}>P2P</span>
-      </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.15)', borderRadius: 100, fontSize: 9, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#a78bfa' }}>
@@ -242,7 +247,7 @@ export default function P2PTransferPage() {
           </div>
           <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 10, padding: '8px 10px', textAlign: 'center' }}>
             <div style={{ fontSize: 7, fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.2)' }}>Daily Limit</div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#f472b6', marginTop: 2 }}>3 / 24h</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: todayCount >= 3 ? '#ef4444' : '#f472b6', marginTop: 2 }}>{todayCount} / 3</div>
           </div>
         </div>
 
@@ -269,11 +274,53 @@ export default function P2PTransferPage() {
         </button>
       </div>
 
-      <div style={{ textAlign: 'center', padding: '28px 16px', color: 'rgba(255,255,255,0.2)', fontSize: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3 }}>
-          <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-        </svg>
-        No transfers yet
+      {/* Transfer History */}
+      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '18px 16px' }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.35)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 16, height: 2, background: '#a78bfa', borderRadius: 2 }} />
+          Recent Transfers
+        </div>
+        {history.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.2)', fontSize: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3 }}>
+              <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+            No transfers yet
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {history.map((t, i) => {
+              const isSent = t.from_uid === uid;
+              const ts = Number(t.created_at) || 0;
+              const timeStr = ts ? new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+              return (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
+                  background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
+                  borderRadius: 12,
+                }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: isSent ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isSent ? '#ef4444' : '#22c55e'} strokeWidth="2" strokeLinecap="round">
+                      {isSent ? <><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></> : <><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></>}
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
+                      {isSent ? `To ${(t.to_name as string) || 'User'}` : `From ${(t.from_name as string) || 'User'}`}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{timeStr}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontFamily: SG, fontSize: 13, fontWeight: 800, color: isSent ? '#ef4444' : '#22c55e' }}>
+                      {isSent ? '-' : '+'}{Number(t.gross_amount || 0).toFixed(2)} ONC
+                    </div>
+                    {isSent && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>burn: {Number(t.burn || 0).toFixed(2)}</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <style>{`@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>

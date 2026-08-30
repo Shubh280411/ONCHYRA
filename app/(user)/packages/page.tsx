@@ -8,24 +8,47 @@ import { detectApiUrl, formatUSD } from '@/lib/utils';
 import { PACKAGES } from '@/types';
 import type React from 'react';
 
-const PACKAGE_COLORS: Record<string, { glow: string; bg: string; color: string }> = {
-  starter: { glow: '#a78bfa', bg: 'rgba(167,139,250,0.15)', color: '#a78bfa' },
-  builder: { glow: '#60a5fa', bg: 'rgba(96,165,250,0.15)', color: '#60a5fa' },
-  pioneer: { glow: '#f59e0b', bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
-  elite: { glow: '#ec4899', bg: 'rgba(236,72,153,0.15)', color: '#ec4899' },
-  titan: { glow: '#8b5cf6', bg: 'rgba(139,92,246,0.15)', color: '#8b5cf6' },
-  dominion: { glow: '#f43f5e', bg: 'rgba(244,63,94,0.15)', color: '#f43f5e' },
-  legacy: { glow: '#fbbf24', bg: 'rgba(251,191,36,0.15)', color: '#fbbf24' },
+const SG = "'Space Grotesk',sans-serif";
+const INTER = "'Inter',sans-serif";
+
+const PACKAGE_STYLES: Record<string, { glow: string; bg: string; color: string; gradient: string; ring: string }> = {
+  starter:  { glow: '#a78bfa', bg: 'rgba(167,139,250,0.12)', color: '#a78bfa', gradient: 'linear-gradient(135deg,#a78bfa,#818cf8)', ring: 'rgba(167,139,250,0.3)' },
+  builder:  { glow: '#60a5fa', bg: 'rgba(96,165,250,0.12)', color: '#60a5fa', gradient: 'linear-gradient(135deg,#60a5fa,#38bdf8)', ring: 'rgba(96,165,250,0.3)' },
+  pioneer:  { glow: '#f59e0b', bg: 'rgba(245,158,11,0.12)', color: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#fbbf24)', ring: 'rgba(245,158,11,0.3)' },
+  elite:    { glow: '#ec4899', bg: 'rgba(236,72,153,0.12)', color: '#ec4899', gradient: 'linear-gradient(135deg,#ec4899,#f472b6)', ring: 'rgba(236,72,153,0.3)' },
+  titan:    { glow: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', color: '#8b5cf6', gradient: 'linear-gradient(135deg,#8b5cf6,#a78bfa)', ring: 'rgba(139,92,246,0.3)' },
+  dominion: { glow: '#f43f5e', bg: 'rgba(244,63,94,0.12)', color: '#f43f5e', gradient: 'linear-gradient(135deg,#f43f5e,#fb7185)', ring: 'rgba(244,63,94,0.3)' },
+  legacy:   { glow: '#fbbf24', bg: 'rgba(251,191,36,0.12)', color: '#fbbf24', gradient: 'linear-gradient(135deg,#fbbf24,#f59e0b)', ring: 'rgba(251,191,36,0.3)' },
 };
 
 const ICONS: Record<string, React.JSX.Element> = {
-  starter: <svg width="22" height="22" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>,
-  builder: <svg width="22" height="22" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>,
-  pioneer: <svg width="22" height="22" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
-  elite: <svg width="22" height="22" fill="none" stroke="#ec4899" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>,
-  titan: <svg width="22" height="22" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
-  dominion: <svg width="22" height="22" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>,
-  legacy: <svg width="22" height="22" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" /></svg>,
+  starter:  <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z" fill="#a78bfa" opacity="0.2"/><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  builder:  <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="#60a5fa" opacity="0.2" stroke="#60a5fa" strokeWidth="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="#60a5fa" opacity="0.2" stroke="#60a5fa" strokeWidth="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="#60a5fa" opacity="0.2" stroke="#60a5fa" strokeWidth="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="#60a5fa" opacity="0.2" stroke="#60a5fa" strokeWidth="1.5"/></svg>,
+  pioneer:  <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#f59e0b" opacity="0.15" stroke="#f59e0b" strokeWidth="1.5"/><path d="M12 6v6l4 2" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  elite:    <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 7.1-1.01L12 2z" fill="#ec4899" opacity="0.2"/><path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 7.1-1.01L12 2z" stroke="#ec4899" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="3" fill="#ec4899" opacity="0.4"/></svg>,
+  titan:    <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="#8b5cf6" opacity="0.15" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 12l2 2 4-4" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  dominion: <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z" fill="#f43f5e" opacity="0.15" stroke="#f43f5e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 17l10 5 10-5" stroke="#f43f5e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12l10 5 10-5" stroke="#f43f5e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  legacy:   <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5" fill="#fbbf24" opacity="0.15" stroke="#fbbf24" strokeWidth="1.5"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="8" r="2" fill="#fbbf24" opacity="0.4"/></svg>,
+};
+
+const TIER_LABELS: Record<string, string> = {
+  starter: 'BRONZE',
+  builder: 'SILVER',
+  pioneer: 'GOLD',
+  elite: 'PLATINUM',
+  titan: 'DIAMOND',
+  dominion: 'ROYAL',
+  legacy: 'LEGENDARY',
+};
+
+const ROI_DATA: Record<string, { days: number; totalRoi: number }> = {
+  starter: { days: 30, totalRoi: 1.50 },
+  builder: { days: 45, totalRoi: 4.50 },
+  pioneer: { days: 60, totalRoi: 15 },
+  elite: { days: 90, totalRoi: 45 },
+  titan: { days: 120, totalRoi: 120 },
+  dominion: { days: 180, totalRoi: 450 },
+  legacy: { days: 365, totalRoi: 1825 },
 };
 
 const CIRCUM = 2 * Math.PI * 34;
@@ -70,8 +93,8 @@ export default function PackagesPage() {
 
   const buyLabel = useMemo(() => {
     if (!selected) return 'Select a package';
-    if (walletBalance < finalPrice) return `Insufficient wallet balance (${formatUSD(finalPrice)} needed)`;
-    if (upgradeCredit > 0) return `Activate ${formatUSD(selected.price)} (Credit: ${formatUSD(upgradeCredit)})`;
+    if (walletBalance < finalPrice) return `Insufficient Balance (${formatUSD(finalPrice)} needed)`;
+    if (upgradeCredit > 0) return `Activate ${formatUSD(selected.price)} (Credit: -${formatUSD(upgradeCredit)})`;
     return `Activate for ${formatUSD(selected.price)}`;
   }, [selected, finalPrice, walletBalance, upgradeCredit]);
 
@@ -114,7 +137,7 @@ export default function PackagesPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Purchase failed');
-      showToast(`${selected.name} activated! ${selected.boost}x mining boost`);
+      showToast(`${selected.name} activated! ${selected.boost}x mining boost applied`);
       setSelectedPkg(null);
       loadData();
     } catch (e: unknown) {
@@ -125,184 +148,274 @@ export default function PackagesPage() {
 
   if (loading) {
     return (
-      <div style={{ fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
-        <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', paddingTop: 60 }}>
-          <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.05)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>Loading packages...</div>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 80 }}>
+        <div style={{ width: 40, height: 40, border: '3px solid rgba(255,255,255,0.05)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, fontWeight: 600 }}>Loading packages...</div>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", background: '#03040a', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px', backgroundImage: 'radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.06) 0%,transparent 60%)' }}>
-      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {ToastComponent}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {ToastComponent}
+      <style>{`
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+      `}</style>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 22, padding: '14px 16px' }}>
-          <Link href="/dashboard" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, cursor: 'pointer', color: 'white', textDecoration: 'none', flexShrink: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-          </Link>
-          <span style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flex: 1 }}>
-            ONCHYRA
-          </span>
-          <div style={{ fontSize: 11, fontWeight: 700, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.15)', padding: '6px 14px', borderRadius: 100, whiteSpace: 'nowrap' }}>
-            Wallet <span style={{ fontFamily: "'Space Grotesk'", color: '#a78bfa' }}>{formatUSD(walletBalance)}</span>
-          </div>
-        </div>
-
-        {/* Section title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 22, margin: '4px 0 2px' }}>Mining Packages</div>
-          <div
-            onClick={() => setShowRules(true)}
-            style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-          >
-            <svg width="14" height="14" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
-          </div>
-        </div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>Activate a package to boost your mining rate</div>
-
-        {/* Active Package Card */}
+        {/* ACTIVE PACKAGE STATUS */}
         {active && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '16px 20px' }}>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: PACKAGE_COLORS[active.id]?.bg || 'rgba(167,139,250,0.15)' }}>
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 22, padding: '20px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', filter: 'blur(40px)', opacity: 0.2, background: PACKAGE_STYLES[active.id]?.glow || '#a78bfa' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16, position: 'relative' }}>
+              <div style={{ width: 50, height: 50, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: PACKAGE_STYLES[active.id]?.bg || 'rgba(167,139,250,0.12)', border: `1px solid ${PACKAGE_STYLES[active.id]?.ring || 'rgba(167,139,250,0.3)'}`, flexShrink: 0 }}>
                 {ICONS[active.id]}
               </div>
-              <div>
-                <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 15 }}>{active.name}</div>
-                <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                  <svg width="12" height="12" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="18 2 22 6 18 10" /><path d="M22 6h-8a6 6 0 0 0-6 6v10" /></svg>
-                  {packageBoost}x
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: SG, fontWeight: 900, fontSize: 17 }}>{active.name}</span>
+                  <span style={{ fontSize: 7, fontWeight: 800, letterSpacing: 1, padding: '2px 8px', borderRadius: 6, background: PACKAGE_STYLES[active.id]?.bg || 'rgba(167,139,250,0.12)', color: PACKAGE_STYLES[active.id]?.color || '#a78bfa', border: `1px solid ${PACKAGE_STYLES[active.id]?.ring || 'rgba(167,139,250,0.3)'}` }}>
+                    {TIER_LABELS[active.id]}
+                  </span>
+                  <span style={{ fontSize: 8, fontWeight: 800, padding: '2px 8px', borderRadius: 6, background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>
+                    ACTIVE
+                  </span>
+                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 3 }}>
+                  Daily Claim: <span style={{ color: '#22c55e', fontWeight: 700 }}>{(0.05 * packageBoost).toFixed(2)} ONC/day</span>
                 </div>
               </div>
+              <div style={{ flexShrink: 0, position: 'relative' }}>
+                <svg width="72" height="72" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+                  <circle cx="40" cy="40" r="34" fill="none" strokeWidth="5" strokeLinecap="round" strokeDasharray={CIRCUM} strokeDashoffset={CIRCUM - (gaugePct / 100) * CIRCUM} transform="rotate(-90 40 40)" style={{ stroke: gaugeColor, transition: '0.8s' }} />
+                  <text x="40" y="37" textAnchor="middle" fontSize="15" fontWeight="900" fontFamily={SG} fill="white">{Math.round(gaugePct)}%</text>
+                  <text x="40" y="50" textAnchor="middle" fontSize="7" fill="rgba(255,255,255,0.3)" fontWeight="600">Used</text>
+                </svg>
+              </div>
             </div>
-            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <svg width="76" height="76" viewBox="0 0 80 80">
-                <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-                <circle cx="40" cy="40" r="34" fill="none" strokeWidth="6" strokeLinecap="round" strokeDasharray={CIRCUM} strokeDashoffset={CIRCUM - (gaugePct / 100) * CIRCUM} transform="rotate(-90 40 40)" style={{ stroke: gaugeColor, transition: '0.8s' }} />
-                <text x="40" y="36" textAnchor="middle" fontSize="16" fontWeight="900" fontFamily="'Space Grotesk'" fill="white">{Math.round(gaugePct)}%</text>
-                <text x="40" y="50" textAnchor="middle" fontSize="7" fill="rgba(255,255,255,0.25)">Used</text>
-              </svg>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', marginTop: -2, textAlign: 'center' }}>{formatUSD(packageUsage)} / {formatUSD(packageCap)}</div>
+            {/* Stats row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, position: 'relative' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>Boost</div>
+                <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 16, color: '#22c55e', marginTop: 2 }}>{packageBoost}x</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>Earned</div>
+                <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 16, color: '#fbbf24', marginTop: 2 }}>{formatUSD(packageUsage)}</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '10px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>Cap</div>
+                <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 16, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{formatUSD(packageCap)}</div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Package Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {PACKAGES.map(p => {
+        {/* SECTION HEADER */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="rgba(167,139,250,0.3)" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <span style={{ fontFamily: SG, fontWeight: 800, fontSize: 16 }}>Choose Your Package</span>
+          <div onClick={() => setShowRules(true)} style={{ marginLeft: 'auto', width: 24, height: 24, borderRadius: '50%', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <svg width="13" height="13" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: -8, marginBottom: 4 }}>Higher packages unlock faster mining & bigger commission caps</div>
+
+        {/* PACKAGE CARDS - FULL WIDTH STACKED */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {PACKAGES.map((p, idx) => {
             const isPurchased = purchasedPackages.includes(p.id);
+            const isActive = activePkg === p.id;
             const isSelected = selectedPkg === p.id && !isPurchased;
-            const pc = PACKAGE_COLORS[p.id] || PACKAGE_COLORS.starter;
+            const ps = PACKAGE_STYLES[p.id] || PACKAGE_STYLES.starter;
+            const dailyClaim = (0.05 * p.boost).toFixed(2);
             return (
               <button
                 key={p.id}
                 onClick={() => !isPurchased && setSelectedPkg(p.id)}
                 disabled={isPurchased}
                 style={{
-                  border: `1px solid ${isSelected ? '#a78bfa' : 'rgba(255,255,255,0.1)'}`,
-                  borderRadius: 20, padding: '18px 16px 16px', cursor: isPurchased ? 'not-allowed' : 'pointer',
-                  transition: '0.25s', position: 'relative', overflow: 'hidden', textAlign: 'left',
-                  opacity: isPurchased ? 0.45 : 1,
-                  background: isSelected ? 'rgba(167,139,250,0.06)' : 'rgba(255,255,255,0.04)',
-                  color: 'white', fontFamily: "'Inter',sans-serif", fontSize: 12
+                  border: `1px solid ${isActive ? ps.color : isSelected ? ps.ring : 'rgba(255,255,255,0.08)'}`,
+                  borderRadius: 20,
+                  padding: 0,
+                  cursor: isPurchased ? 'default' : 'pointer',
+                  transition: 'all 0.3s',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  opacity: isPurchased && !isActive ? 0.4 : 1,
+                  background: isSelected
+                    ? `linear-gradient(135deg, ${ps.bg}, rgba(255,255,255,0.04))`
+                    : isActive
+                      ? `linear-gradient(135deg, ${ps.bg}, rgba(255,255,255,0.02))`
+                      : 'rgba(255,255,255,0.03)',
+                  color: 'white',
+                  fontFamily: INTER,
+                  textAlign: 'left',
                 }}
               >
-                <div style={{ position: 'absolute', top: -30, right: -30, width: 80, height: 80, borderRadius: '50%', filter: 'blur(30px)', opacity: isSelected ? 0.35 : 0.15, pointerEvents: 'none', transition: '0.4s', background: pc.glow }} />
-                {isPurchased && (
-                  <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 7, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, padding: '3px 8px', borderRadius: 6, background: 'rgba(34,197,94,0.15)', color: '#22c55e', zIndex: 2 }}>DONE</div>
-                )}
-                {!isPurchased && (
-                  <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 7, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, padding: '3px 8px', borderRadius: 6, background: 'rgba(167,139,250,0.1)', color: '#a78bfa' }}>{p.name[0]}</div>
-                )}
-                <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, background: pc.bg }}>
-                  {ICONS[p.id]}
+                {/* Background glow */}
+                <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', filter: 'blur(35px)', opacity: isSelected || isActive ? 0.3 : 0.1, background: ps.glow, pointerEvents: 'none', transition: '0.4s' }} />
+
+                <div style={{ padding: '18px 18px 16px', position: 'relative' }}>
+                  {/* Top row: icon + name + badge + price */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                    {/* Icon with ring */}
+                    <div style={{ width: 48, height: 48, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: ps.bg, border: `1px solid ${ps.ring}`, position: 'relative' }}>
+                      {ICONS[p.id]}
+                      {isActive && (
+                        <div style={{ position: 'absolute', top: -4, right: -4, width: 14, height: 14, borderRadius: '50%', background: '#22c55e', border: '2px solid #03040a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: SG, fontWeight: 900, fontSize: 16 }}>{p.name}</span>
+                        <span style={{ fontSize: 7, fontWeight: 800, letterSpacing: 1, padding: '2px 7px', borderRadius: 5, background: ps.bg, color: ps.color, border: `1px solid ${ps.ring}` }}>
+                          {TIER_LABELS[p.id]}
+                        </span>
+                        {isActive && (
+                          <span style={{ fontSize: 7, fontWeight: 800, letterSpacing: 0.5, padding: '2px 7px', borderRadius: 5, background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>ACTIVE</span>
+                        )}
+                        {isPurchased && !isActive && (
+                          <span style={{ fontSize: 7, fontWeight: 800, padding: '2px 7px', borderRadius: 5, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)' }}>USED</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>
+                        Daily: <span style={{ color: '#22c55e', fontWeight: 700 }}>{dailyClaim} ONC</span>
+                        <span style={{ margin: '0 4px', opacity: 0.3 }}>|</span>
+                        Cap: <span style={{ color: 'rgba(255,255,255,0.5)' }}>{formatUSD(p.cap)}</span>
+                      </div>
+                    </div>
+                    <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                      {isPurchased ? (
+                        <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 18, color: 'rgba(255,255,255,0.2)' }}>$--</div>
+                      ) : (
+                        <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 20, background: ps.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>${p.price}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stats row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '8px 6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 7, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>Mining</div>
+                      <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 14, color: ps.color, marginTop: 1 }}>
+                        {p.boost}<span style={{ fontSize: 10, opacity: 0.6 }}>x</span>
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '8px 6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 7, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>Daily</div>
+                      <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 14, color: '#22c55e', marginTop: 1 }}>
+                        {dailyClaim} ONC
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ROI Section */}
+                  {ROI_DATA[p.id] && (
+                    <div style={{ marginTop: 10, background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.08)', borderRadius: 10, padding: '8px 10px', position: 'relative' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                        <div style={{ fontSize: 8, fontWeight: 800, padding: '2px 6px', borderRadius: 4, background: 'rgba(34,197,94,0.12)', color: '#22c55e', letterSpacing: 0.5 }}>ROI</div>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e' }}>Daily 1% ROI</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 20, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${Math.min(100, (ROI_DATA[p.id].days / 365) * 100)}%`, background: 'linear-gradient(90deg, #22c55e, #4ade80)', borderRadius: 20 }} />
+                        </div>
+                        <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', fontWeight: 700, whiteSpace: 'nowrap' }}>{ROI_DATA[p.id].days}d</span>
+                      </div>
+                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
+                        1% daily for {ROI_DATA[p.id].days} days = <span style={{ color: '#22c55e', fontWeight: 800 }}>${ROI_DATA[p.id].totalRoi.toFixed(2)}</span> total
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 800, fontSize: 15 }}>{p.name}</div>
-                {isPurchased ? (
-                  <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 22, marginTop: 4, color: 'rgba(255,255,255,0.3)' }}>Purchased</div>
-                ) : (
-                  <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 22, marginTop: 4, marginBottom: 4, background: 'linear-gradient(135deg,#fff 30%,rgba(167,139,250,0.5))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{formatUSD(p.price)}</div>
+
+                {/* Selection indicator */}
+                {isSelected && (
+                  <div style={{ height: 3, background: ps.gradient, borderRadius: '0 0 20px 20px' }} />
                 )}
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.08)', padding: '3px 10px', borderRadius: 100, display: 'inline-block', marginTop: 4 }}>{p.boost}x Mining</div>
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 6 }}>{formatUSD(p.cap)} max</div>
               </button>
             );
           })}
         </div>
 
-        {/* Info Card */}
-        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Current Package</span>
-            <span style={{ fontWeight: 700 }}>{active?.name || 'None'}</span>
+        {/* UPGRADE CREDIT INFO */}
+        {upgradeCredit > 0 && (
+          <div style={{ background: 'linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.03))', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e' }}>Upgrade Credit: -{formatUSD(upgradeCredit)}</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>You get 70% back because usage &lt; 5%</div>
+            </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Mining Boost</span>
-            <span style={{ fontWeight: 700, color: '#22c55e' }}>{packageBoost}x</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: 12 }}>
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Package Usage</span>
-            <span style={{ fontWeight: 700 }}>{formatUSD(packageUsage)} / {formatUSD(packageCap)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontSize: 12 }}>
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Upgrade Credit</span>
-            <span style={{ fontWeight: 700 }}>{formatUSD(upgradeCredit)}</span>
-          </div>
-        </div>
+        )}
 
-        {/* Buy Button */}
+        {/* BUY BUTTON */}
         <button
           onClick={purchase}
           disabled={!selected || purchasing || walletBalance < finalPrice}
           style={{
-            width: '100%', padding: 18, border: 'none', borderRadius: 16,
-            background: !selected || purchasing || walletBalance < finalPrice ? '#1a1a1a' : 'linear-gradient(135deg,#a78bfa,#60a5fa)',
+            width: '100%', padding: 18, borderRadius: 18,
+            background: !selected || purchasing || walletBalance < finalPrice ? 'rgba(255,255,255,0.04)' : 'linear-gradient(135deg,#a78bfa,#60a5fa)',
             color: !selected || purchasing || walletBalance < finalPrice ? '#444' : '#000',
             fontWeight: 900, fontSize: 15, cursor: !selected || purchasing || walletBalance < finalPrice ? 'not-allowed' : 'pointer',
-            transition: '0.3s', fontFamily: "'Inter'"
+            transition: '0.3s', fontFamily: SG, letterSpacing: 0.5,
+            border: !selected || purchasing || walletBalance < finalPrice ? '1px solid rgba(255,255,255,0.06)' : 'none',
           }}
         >
-          {purchasing ? 'Processing...' : buyLabel}
+          {purchasing ? (
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <span style={{ width: 16, height: 16, border: '2px solid rgba(0,0,0,0.2)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
+              Processing...
+            </span>
+          ) : buyLabel}
         </button>
-      </div>
 
-      {/* Upgrade Rules Modal */}
+      {/* UPGRADE RULES MODAL */}
       {showRules && (
-        <div onClick={() => setShowRules(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#0d0f1a', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 20, padding: '24px 20px', maxWidth: 420, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 900, fontSize: 18, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Upgrade Rules</div>
-              <div onClick={() => setShowRules(false)} style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <svg width="14" height="14" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+        <div onClick={() => setShowRules(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 5000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: 0, backdropFilter: 'blur(8px)' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#0b0d18', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px 24px 0 0', padding: '24px 20px 32px', maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}>
+            {/* Handle bar */}
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', margin: '0 auto 20px' }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(167,139,250,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#a78bfa" strokeWidth="1.5"/><line x1="12" y1="16" x2="12" y2="12" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="8" x2="12.01" y2="8" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"/></svg>
+              </div>
+              <div style={{ fontFamily: SG, fontWeight: 900, fontSize: 18 }}>Package Rules</div>
+              <div onClick={() => setShowRules(false)} style={{ marginLeft: 'auto', width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <svg width="14" height="14" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>
-              <div style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.15)', borderRadius: 14, padding: 14 }}>
-                <div style={{ fontWeight: 800, color: '#a78bfa', marginBottom: 6 }}>1. One Package, One Time</div>
-                <div>Each package can only be purchased <b style={{ color: 'white' }}>once</b>. You cannot buy the same package again. To get more benefits, you must upgrade to a higher package.</div>
-              </div>
-              <div style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.15)', borderRadius: 14, padding: 14 }}>
-                <div style={{ fontWeight: 800, color: '#60a5fa', marginBottom: 6 }}>2. Lifetime Cap Stacking</div>
-                <div>When you upgrade, your new package cap is <b style={{ color: 'white' }}>added</b> to your previous cap. E.g., Builder ($100 cap) + Pioneer ($250 cap) = <b style={{ color: 'white' }}>$350 total cap</b>.</div>
-              </div>
-              <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 14, padding: 14 }}>
-                <div style={{ fontWeight: 800, color: '#22c55e', marginBottom: 6 }}>3. Upgrade Credit (70% Back)</div>
-                <div>If your current package usage is <b style={{ color: 'white' }}>less than 5%</b> of its cap, you get <b style={{ color: 'white' }}>70% of your current package price</b> as credit toward the upgrade.</div>
-              </div>
-              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 14, padding: 14 }}>
-                <div style={{ fontWeight: 800, color: '#f59e0b', marginBottom: 6 }}>4. Mining Boost Changes</div>
-                <div>When you upgrade, your mining boost changes to the <b style={{ color: 'white' }}>new package&apos;s boost</b>. The boost is not added — it replaces the old one.</div>
-              </div>
-              <div style={{ background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.15)', borderRadius: 14, padding: 14 }}>
-                <div style={{ fontWeight: 800, color: '#ec4899', marginBottom: 6 }}>5. Package Order</div>
-                <div>Starter, Builder, Pioneer, Elite, Titan, Dominion, Legacy. You can only upgrade to a <b style={{ color: 'white' }}>higher</b> package.</div>
-              </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { num: '1', color: '#a78bfa', title: 'One Package at a Time', desc: 'Each package can only be purchased once. To get more benefits, upgrade to a higher tier.' },
+                { num: '2', color: '#60a5fa', title: 'Cap Stacking', desc: 'When you upgrade, your new package cap is added to the previous cap. More upgrades = bigger lifetime earning potential.' },
+                { num: '3', color: '#22c55e', title: '70% Upgrade Credit', desc: 'If usage is less than 5%, you get 70% of current package price as credit toward the upgrade.' },
+                { num: '4', color: '#f59e0b', title: 'Mining Boost Replaces', desc: 'New package boost replaces the old one. Higher tier = more ONC per day.' },
+                { num: '5', color: '#ec4899', title: 'Referral Commissions', desc: 'When your team buys packages, you earn 10% (L1), 5% (L2), 3% (L3) commission on the price.' },
+              ].map(rule => (
+                <div key={rule.num} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 14px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: `${rule.color}15`, border: `1px solid ${rule.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: SG, fontWeight: 900, fontSize: 12, color: rule.color }}>{rule.num}</div>
+                  <div>
+                    <div style={{ fontFamily: SG, fontWeight: 800, fontSize: 13, color: rule.color, marginBottom: 3 }}>{rule.title}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{rule.desc}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div onClick={() => setShowRules(false)} style={{ marginTop: 18, width: '100%', padding: 14, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontWeight: 800, fontSize: 13, cursor: 'pointer', textAlign: 'center' }}>Got it</div>
+
+            <button onClick={() => setShowRules(false)} style={{ marginTop: 20, width: '100%', padding: 14, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', color: '#000', fontWeight: 900, fontSize: 13, cursor: 'pointer', fontFamily: SG }}>
+              Got it
+            </button>
           </div>
         </div>
       )}

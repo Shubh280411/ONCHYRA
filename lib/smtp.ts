@@ -70,7 +70,7 @@ export function getSmtpSettings(kind: string): SmtpSettings {
     isOtp ? 'OTP_SMTP_FROM_NAME' : 'MAIL_SMTP_FROM_NAME'
   ]) || (isOtp ? 'ONCHYRA Verify' : 'ONCHYRA');
   const appsScript = {
-    enabled: process.env.EMAIL_PROVIDER === 'apps_script' || Boolean(process.env.GMAIL_APPS_SCRIPT_URL),
+    enabled: !isOtp && (process.env.EMAIL_PROVIDER === 'apps_script' || Boolean(process.env.GMAIL_APPS_SCRIPT_URL)),
     url: process.env.GMAIL_APPS_SCRIPT_URL,
     secret: process.env.GMAIL_APPS_SCRIPT_SECRET
   };

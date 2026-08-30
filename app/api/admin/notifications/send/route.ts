@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       link: link || '',
       read_by: {},
       created_at: Date.now(),
-    });
+    }, 'id');
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

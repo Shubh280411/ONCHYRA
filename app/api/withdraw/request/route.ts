@@ -11,7 +11,7 @@ async function verifyOtp(email: string, otp: string): Promise<{ valid: boolean; 
       const rows = await import('@/lib/db').then(m => m.findWhere('otp_store', { email: key }));
       if (rows.length) {
         const row = rows[0];
-        if (row.verified) return { valid: false, error: 'OTP already verified' };
+        if (row.verified) return { valid: true };
         if (Date.now() > (row.expires_at as number)) {
           deleteOtpEntry(key);
           return { valid: false, error: 'OTP expired. Request a new one.' };
@@ -30,7 +30,7 @@ async function verifyOtp(email: string, otp: string): Promise<{ valid: boolean; 
     return { valid: false, error: 'No OTP sent to this email' };
   }
 
-  if (entry.verified) return { valid: false, error: 'OTP already verified' };
+  if (entry.verified) return { valid: true };
   if (Date.now() > entry.expiresAt) {
     deleteOtpEntry(key);
     return { valid: false, error: 'OTP expired. Request a new one.' };
